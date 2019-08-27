@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get Leafed</title>
+
+  <link href="css/style.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Karla&display=swap" rel="stylesheet">
+
+  <!-- update the version number as needed -->
+  <script src="/__/firebase/6.4.2/firebase-app.js"></script>
+  <!-- include only the Firebase features as you need -->
+  <script src="/__/firebase/6.4.2/firebase-auth.js"></script>
+  <script src="/__/firebase/6.1.1/firebase-functions.js"></script>
+  <script src="/__/firebase/6.4.2/firebase-database.js"></script>
+  <script src="/__/firebase/6.4.2/firebase-storage.js"></script>
+  <!-- initialize the SDK after all desired features are loaded -->
+  <script src="/__/firebase/init.js"></script>
+
+</head>
+<body class="karlaFont">
+
+  <!--
+  <nav class="navbar navbar-expand-sm sticky-top navbar-light bg-lignt"  style="height:60px;">
+  <a class="navbar-brand" href="#">
+  <img src="/images/logo.png" style="height:30px" class="d-inline-block align-top" alt="">
+</a>
+<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="">
+<ul class="navbar-nav mr-auto">
+<li class="nav-item active">
+<a class="nav-link" href="#">Deals</a>
+</li>
+<li class="nav-item active">
+<a class="nav-link" href="#">Events</a>
+</li>
+<li class="nav-item dropdown">
+<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+Login
+</a>
+<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+<a class="dropdown-item" href="#">User</a>
+<a class="dropdown-item" href="#">Owner</a>
+</div>
+</li>
+
+</ul>
+<ul class="ml-auto" style="margin-top:8px;">
+<form class="form-inline">
+<input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+</form>
+</ul>
+</div>
+</nav>
+-->
+
+<nav class="navbar navbar-expand-lg navbar-light ">
+  <a class="navbar-brand" href="#">
+    <img src="/images/logo.png" style="height:30px" class="d-inline-block align-top" alt="">
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+      <li class="nav-item active">
+        <a class="nav-link" href="#">Deals</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Events</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Post A Deal Or Event</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">Subscribe To Get Latest Deals</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Login
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item" href="#">User</a>
+          <a class="dropdown-item" href="#">Owner</a>
+        </div>
+      </li>
+
+    </ul>
+
+    <!--<form class="form-inline my-2 my-lg-0">
+      <input class="form-control mr-sm-2" type="search" placeholder="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+    </form>-->
+    <!--<div class="mx-auto order-0">
+      <form action="https://gmail.us3.list-manage.com/subscribe/post?u=aa2869da6e046c4df9d242db0&amp;id=e60aaea307"
+      method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="form-inline my-2 my-lg-0 validate" target="_blank" novalidate>
+        <div id="mc_embed_signup_scroll">
+          <input style="width:100%" type="email" value="" name="EMAIL" class="email form-control" id="mce-EMAIL" placeholder="email address" required>
+          <div style="position: absolute; left: -5000px;" aria-hidden="true">
+            <input type="text" name="b_aa2869da6e046c4df9d242db0_e60aaea307" tabindex="-1" value="" class="form-control">
+          </div>
+          <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="btn btn-outline-success btn-sm">
+        </div>
+      </form>
+    </div>-->
+  </div>
+</nav>
+
+<div ng-app="getleafedApp" ng-view style=""></div>
+
+
+
+<nav class="navbar" style="background-color:white;">
+
+  <div class="mx-auto order-0">
+    <!-- Begin Mailchimp Signup Form -->
+    <link href="//cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css" rel="stylesheet" type="text/css">
+    <style type="text/css">
+    #mc_embed_signup{background:#fff; clear:left; font:14px Helvetica,Arial,sans-serif; width:100%;}
+    /* Add your own Mailchimp form style overrides in your site stylesheet or in this style block.
+    We recommend moving this block and the preceding CSS link to the HEAD of your HTML file. */
+  </style>
+  <div id="mc_embed_signup">
+    <form action="https://gmail.us3.list-manage.com/subscribe/post?u=aa2869da6e046c4df9d242db0&amp;id=e60aaea307" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
+      <div id="mc_embed_signup_scroll">
+        <input style="width:50%" type="email" value="" name="EMAIL" class="email form-control" id="mce-EMAIL" placeholder="email address" required>
+        <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+        <div style="position: absolute; left: -5000px;" aria-hidden="true">
+          <input type="text" name="b_aa2869da6e046c4df9d242db0_e60aaea307" tabindex="-1" value="" class="form-control">
+        </div>
+        <!--<div class="clear">-->
+        <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="btn btn-outline-success btn-sm">
+        <!--</div>-->
+      </div>
+    </form>
+  </div>
+
+  <!--End mc_embed_signup-->
+  <a href="kdkd" style="margin:5px;">Deals</a>
+  <a href="kdkd" style="margin:5px;">Events</a>
+  <a href="kdkd" style="margin:5px;">Sign In</a>
+  <a href="kdkd" style="margin:5px;">About Us</a><br>
+
+  <a href=""><i class="fab fa-instagram" style="margin-left:100px;margin-right:5px;"></i></a>
+  <a href=""><i class="fab fa-facebook" style="margin-right:5px;"></i></a>
+  <a href=""><i class="fab fa-twitter"></i></i></a>
+  <br>
+  <!--<small style="margin-left:120px;">&copy; Copyright 2019, Getleafed Inc.</small>-->
+
+
+
+</div>
+<!--<div class="mx-auto order-0">
+
+<a href="https://www.facebook.com/bootsnipp"><i id="social-fb" class="fa fa-facebook-square fa-3x social"></i></a>
+<a href="https://twitter.com/bootsnipp"><i id="social-tw" class="fa fa-twitter-square fa-3x social"></i></a>
+<a href="https://plus.google.com/+Bootsnipp-page"><i id="social-gp" class="fa fa-google-plus-square fa-3x social"></i></a>
+<a href="mailto:bootsnipp@gmail.com"><i id="social-em" class="fa fa-envelope-square fa-3x social"></i></a>
+</div>-->
+
+</nav>
+
+
+
+
+<!--<a href="kdkd" style="margin:20px;">Deals</a>
+<a href="kdkd" style="margin:20px;">Events</a>
+<a href="kdkd" style="margin:20px;">User Sign In</a>
+<a href="kdkd" style="margin:20px;">Owner Sign In</a>-->
+
+<!--<a href="https://www.facebook.com/bootsnipp"><i id="social-fb" class="fa fa-facebook-square fa-3x social"></i></a>
+<a href="https://twitter.com/bootsnipp"><i id="social-tw" class="fa fa-twitter-square fa-3x social"></i></a>
+<a href="https://plus.google.com/+Bootsnipp-page"><i id="social-gp" class="fa fa-google-plus-square fa-3x social"></i></a>
+<a href="mailto:bootsnipp@gmail.com"><i id="social-em" class="fa fa-envelope-square fa-3x social"></i></a>
+<small>&copy; Copyright 2019, Getleafed Inc.</small>
+<a href="privacy.html" style="">Privacy</a>-->
+
+
+<!-- ./Footer -->
+<script
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDg_eeQvBriPKSAUkLQqF-X1FRSX-y1JSI">
+</script>
+<script src="https://kit.fontawesome.com/b5e825979c.js"></script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular-route.js"> </script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular-sanitize.js"> </script>
+<script src="js/bootbox.all.min.js"></script>
+<script src="js/isotope.pkgd.min.js"></script>
+<script src="js/main.js?t=t" + (new Date())></script>
+</body>
+</html>

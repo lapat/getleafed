@@ -1,0 +1,132 @@
+
+<hr>
+<div class="container" style="margin-bottom:100px;margin-top:30px;">
+  <div class="row">
+    <div class="col-sm">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-subtitle mb-2 text-muted">High Times Dispensary</h6>
+
+          <div style="height:300px;width:100%;" id="map"></div>
+        </div>
+      </div>
+      <script>
+        var map, infoWindow, geocoder;
+
+        function updateMap() {
+          // The location of Uluru
+          //{{delivery.dropoff.location.lat}}
+          // The map, centered at Uluru
+          geocoder = new google.maps.Geocoder();
+
+          console.log("updateMap called")
+
+          var latlng = new google.maps.LatLng(-34.397, 150.644);
+          var mapOptions = {
+            zoom: 8,
+            center: latlng
+          }
+          map = new google.maps.Map(document.getElementById('map'), mapOptions);
+          //codeAddress()
+          /*
+          map = new google.maps.Map(
+          document.getElementById('map'), {zoom: 9, center: "1103 Mulford Street, Evanston, Illinois, 60202"});
+          var dropOffMarker = new google.maps.Marker({
+          position:  "1103 Mulford Street, Evanston, Illinois, 60202",
+          icon: 'https://cbddelivery-64bae.web.app/img/drop_off_icon.png',
+          map: map
+        });*/
+        //}
+        //codeGoogleMapAddress("1103 mulford street, evanston, Illinois")
+
+      }
+
+      function codeGoogleMapAddress(address) {
+        console.log("codeGoogleMapAddress address:"+address)
+        //var address = document.getElementById('address').value;
+
+        geocoder = new google.maps.Geocoder();
+
+        console.log("updateMap called")
+
+        var latlng = new google.maps.LatLng(-34.397, 150.644);
+        var mapOptions = {
+          zoom: 8,
+          center: latlng
+        }
+        map = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+
+        geocoder.geocode( { 'address': address}, function(results, status) {
+          console.log("GOT ADDRESS!!! address:"+address)
+          if (status == 'OK') {
+            map.setCenter(results[0].geometry.location);
+            var marker = new google.maps.Marker({
+              map: map,
+              position: results[0].geometry.location
+            });
+          } else {
+            console.log("map did not work" + status)
+            //alert('Geocode was not successful for the following reason: ' + status);
+          }
+        });
+      }
+    </script>
+
+  </div>
+
+  <div class="col-sm">
+    <div class="card myCard" style="">
+      <img src="images/a.jpg" class="card-img img-fluid >
+      <div class="card-body">
+        <h5 class="card-title">40% off 1 Ounce</h5>
+        <p class="card-text">40% off your favorite ounce of weed.  That's it, no strings attached.  BOOM!</p>
+        <button type="button" class="btn btn-outline-success">Print Coupon</button>
+
+      </div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          <a href="">High Times Dispensary</a><br>1103 Mulford Street, Evanston, Illinois<br>
+
+          <span style='color:red;text-decoration:line-through;font-size: 12px;'>$199</span>
+          <span style="font-size: 12px;"> $70</span>
+          <i class="fas fa-map-marker-alt" style="margin-right:5px;font-size:85%;margin-left:15px;"></i><span style="font-size:85%">2 miles</span>
+          <i class="fas fa-eye" style="font-size:85%;margin-left:15px;"></i>
+          <span style="font-size:80%">924</span>
+
+          <i class="heart fa fa-heart-o" style="font-size:85%;margin-left:15px;"></i>
+          <span style="font-size:80%">22</span>
+        </li>
+      </ul>
+      <!--<div class="card-body">
+      <a href="#" class="card-link">Dispensary Web Site</a>
+    </div>-->
+  </div>
+</div>
+
+<div class="col-sm">
+  <p style="font-size:120%">Other Deals At High Times Dispensary</p>
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item">
+      <a href="">25% off Everything.</a>
+    </li>
+    <li class="list-group-item">
+      <a href="">25% off Everything.</a>
+    </li>
+  </ul>
+  <br>
+  <p style="font-size:120%">Other Deals Nearby</p>
+  <ul class="list-group list-group-flush">
+    <li class="list-group-item">
+      <a href="">25% off Everything.</a>
+    </li>
+    <li class="list-group-item">
+      <a href="">25% off Everything.</a>
+    </li>
+  </ul>
+</div>
+
+</div>
+
+
+</div>
