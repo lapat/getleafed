@@ -6,6 +6,7 @@
   <title>Get Leafed</title>
 
   <link href="css/style.css" rel="stylesheet">
+  <link href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Karla&display=swap" rel="stylesheet">
 
   <!-- update the version number as needed -->
@@ -19,46 +20,26 @@
   <script src="/__/firebase/init.js"></script>
 
 </head>
-<body class="karlaFont">
 
-  <!--
-  <nav class="navbar navbar-expand-sm sticky-top navbar-light bg-lignt"  style="height:60px;">
-  <a class="navbar-brand" href="#">
-  <img src="/images/logo.png" style="height:30px" class="d-inline-block align-top" alt="">
-</a>
-<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-<span class="navbar-toggler-icon"></span>
-</button>
-<div class="collapse navbar-collapse" id="navbarNavAltMarkup" style="">
-<ul class="navbar-nav mr-auto">
-<li class="nav-item active">
-<a class="nav-link" href="#">Deals</a>
-</li>
-<li class="nav-item active">
-<a class="nav-link" href="#">Events</a>
-</li>
-<li class="nav-item dropdown">
-<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-Login
-</a>
-<div class="dropdown-menu" aria-labelledby="navbarDropdown">
-<a class="dropdown-item" href="#">User</a>
-<a class="dropdown-item" href="#">Owner</a>
-</div>
-</li>
+<style>
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-    ng-cloak {
+  display: none !important;
+}
+</style>
+<body class="karlaFont showBody" style="display:none;">
 
-</ul>
-<ul class="ml-auto" style="margin-top:8px;">
-<form class="form-inline">
-<input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-<button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-</form>
-</ul>
-</div>
-</nav>
--->
+  <div class="container">
+    <div class="alert alert-danger"  role="alert" id="alertProfilePage" style="display:none;">
+      <span class="alertProfilePageText">
+        Your profile is incomplete.  You must complete your profile before you can make an order.
+      </span>
+    </div>
+  </div>
 
-<nav class="navbar navbar-expand-lg navbar-light ">
+
+
+
+<nav class="navbar navbar-expand-lg navbar-light navbarUser">
   <a class="navbar-brand" href="#">
     <img src="/images/logo.png" style="height:30px" class="d-inline-block align-top" alt="">
   </a>
@@ -69,45 +50,65 @@ Login
   <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
     <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
       <li class="nav-item active">
-        <a class="nav-link" href="#">Deals</a>
+        <a class="nav-link" href="/#/deals" >Deals</a>
       </li>
-      <li class="nav-item">
+      <!--<li class="nav-item">
         <a class="nav-link" href="#">Events</a>
+      </li>-->
+      <li class="nav-item">
+        <a class="nav-link postADeal" href="#">Post A Deal</a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="#">Post A Deal Or Event</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Subscribe To Get Latest Deals</a>
+        <a class="nav-link" href="http://eepurl.com/gBKL7f">Subscribe To Get Latest Deals</a>
       </li>
       <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <a class="nav-link dropdown-toggle toggleSignIn" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           Login
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="#">User</a>
-          <a class="dropdown-item" href="#">Owner</a>
+          <a class="dropdown-item userSignIn" href="javascript: return false;">User</a>
+          <a class="dropdown-item ownerSignIn" href="javascript: return false;">Owner</a>
+          <a class="dropdown-item signOutUser" href="">Sign Out</a>
         </div>
       </li>
-
     </ul>
+  </div>
+</nav>
 
-    <!--<form class="form-inline my-2 my-lg-0">
-      <input class="form-control mr-sm-2" type="search" placeholder="Search">
-      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-    </form>-->
-    <!--<div class="mx-auto order-0">
-      <form action="https://gmail.us3.list-manage.com/subscribe/post?u=aa2869da6e046c4df9d242db0&amp;id=e60aaea307"
-      method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="form-inline my-2 my-lg-0 validate" target="_blank" novalidate>
-        <div id="mc_embed_signup_scroll">
-          <input style="width:100%" type="email" value="" name="EMAIL" class="email form-control" id="mce-EMAIL" placeholder="email address" required>
-          <div style="position: absolute; left: -5000px;" aria-hidden="true">
-            <input type="text" name="b_aa2869da6e046c4df9d242db0_e60aaea307" tabindex="-1" value="" class="form-control">
-          </div>
-          <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="btn btn-outline-success btn-sm">
+
+<nav class="navbar navbar-expand-lg navbar-light navbarStore">
+  <a class="navbar-brand" href="#">
+    <img src="/images/logo.png" style="height:30px" class="d-inline-block align-top" alt="">
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+    <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+      <li class="nav-item active">
+        <a class="nav-link" href="/#/store_deals">Store Deals</a>
+      </li>
+      <!--<li class="nav-item">
+        <a class="nav-link" href="#">Events</a>
+      </li>-->
+      <li class="nav-item">
+        <a class="nav-link" href="/#/post_a_deal">Post A Deal</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/#/store_profile">Store Profile</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle toggleSignIn" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Login
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+          <a class="dropdown-item userSignIn" href="#">User</a>
+          <a class="dropdown-item ownerSignIn" href="#">Owner</a>
+          <a class="dropdown-item signOutStore" href="#">Sign Out</a>
         </div>
-      </form>
-    </div>-->
+      </li>
+    </ul>
   </div>
 </nav>
 
@@ -115,8 +116,7 @@ Login
 
 
 
-<nav class="navbar" style="background-color:white;">
-
+<nav class="navbar navBarFooter" style="background-color:white;">
   <div class="mx-auto order-0">
     <!-- Begin Mailchimp Signup Form -->
     <link href="//cdn-images.mailchimp.com/embedcode/horizontal-slim-10_7.css" rel="stylesheet" type="text/css">
@@ -142,7 +142,7 @@ Login
 
   <!--End mc_embed_signup-->
   <a href="kdkd" style="margin:5px;">Deals</a>
-  <a href="kdkd" style="margin:5px;">Events</a>
+  <!--<a href="kdkd" style="margin:5px;">Events</a>-->
   <a href="kdkd" style="margin:5px;">Sign In</a>
   <a href="kdkd" style="margin:5px;">About Us</a><br>
 
@@ -188,12 +188,19 @@ src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDg_eeQvBriPKSAUkLQqF-X1FR
 <script src="https://kit.fontawesome.com/b5e825979c.js"></script>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.min.js"></script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular-route.js"> </script>
 <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular-sanitize.js"> </script>
+<script src="js/jqblock.js"></script>
 <script src="js/bootbox.all.min.js"></script>
 <script src="js/isotope.pkgd.min.js"></script>
 <script src="js/main.js?t=t" + (new Date())></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.12/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.13/js/dataTables.bootstrap4.min.js"></script>
+<script src="js/scrollBody.js"></script>
+
 </body>
 </html>
