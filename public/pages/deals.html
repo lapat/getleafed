@@ -1,6 +1,6 @@
 
-
 <div class="container" style="margin-bottom:150px;">
+
   <p style="font-size:30px;" class="text-center">
     <i class="fas fa-cannabis" style="margin-right:5px;font-size:70%;color:#3e8042"></i>
     <span style="color:#3e8042">Cannabis Deals and Coupons</span>
@@ -60,13 +60,16 @@
 
 
     <div class="grid" >
+
+      <span ng-repeat="aDeal in deals" ng-click="clickedOnDeal(aDeal)">
+
       <div class="element-item transition metal " data-category="transition">
-        <img src="images/a.jpg" class="img-fluid rounded mx-auto d-block" style=""><br>
+        <img src={{aDeal.image_name}} class="img-fluid rounded mx-auto d-block" style=""><br>
         <h5 style="font-weight:bold;font-size:150%;">
-          Purple Haze
+          {{aDeal.deal_name}}
         </h5>
         <p style="font-size: 14px;">
-          sjdfkslj fks djlkfj sdlkf jlskdj fklsd jflksd jlkf jlksd jflkds jlkfj sldkf j
+          {{aDeal.deal_description}}
         </p>
         <span style='color:red;text-decoration:line-through;font-size: 12px;'>$199</span>
         <span style="font-size: 12px;"> $70</span>
@@ -79,6 +82,10 @@
           <span style="font-size:80%">22</span>
         </span>
       </div>
+      </span>
+
+
+
       <div class="element-item metalloid " data-category="metalloid">
         <img src="images/b.jpg" class="img-fluid rounded mx-auto d-block" style=""><br>
         <h5 style="font-weight:bold;font-size:150%;">

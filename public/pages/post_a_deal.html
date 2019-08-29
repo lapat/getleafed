@@ -1,7 +1,7 @@
 <div class="container" style="margin-top:20px;">
   <div class="card">
     <div class="card-body">
-      <h5 class="card-title">Add Your Deal</h5>
+      <h5 class="card-title-deal">Add Your Deal</h5>
 
       <form style="margin-bottom:10px;">
         <div class="form-row">
@@ -33,12 +33,29 @@
                 </div>
               </div>
           </div>
-          <div class="col-sm">
+          <!--<div class="col-sm">
             <input  class="form-control" id="previous_price" placeholder="Previous Price if any" >
-          </div>
+          </div>-->
+
           <div class="col-sm">
-            <input  class="form-control" id="new_price" placeholder="New Price if any" >
+          <div class="input-group mb-2">
+            <div class="input-group-prepend">
+              <div class="input-group-text"><i class="fas fa-dollar-sign"></i></div>
+            </div>
+            <input type="number" class="form-control" id="previous_price" placeholder="Previous Price if any">
           </div>
+        </div>
+
+        <div class="col-sm">
+        <div class="input-group mb-2">
+          <div class="input-group-prepend">
+            <div class="input-group-text"><i class="fas fa-dollar-sign"></i></div>
+          </div>
+          <input type="number" class="form-control" id="new_price" placeholder="New Price if any">
+        </div>
+      </div>
+
+
         </div>
         <div class="form-row" style="margin-top:10px;">
           <div class="col-sm">
@@ -47,11 +64,17 @@
                 <button class="btn btn-outline-secondary dropdown-toggle whichStore" type="button"  data-toggle="dropdown" data-id="" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   Which Store
                 </button>
+                 <div class="dropdown-menu whichStoreDropDown" aria-labelledby="dropdownMenuButton">
+                   <span  ng-repeat="aStore in stores"  ng-click="clickedOnStoreInPostDeal(aStore)">
+                     <a class="dropdown-item" data-id="1" href="javascript:void(0);">{{aStore.store_name}}</a>
+                   </span>
+                 </div>
+                <!--
                 <div class="dropdown-menu whichStoreDropDown" aria-labelledby="dropdownMenuButton">
                   <a class="dropdown-item" data-id="1" href="javascript:void(0);">Store 1</a>
                   <a class="dropdown-item" data-id="2" href="javascript:void(0);">Store 2</a>
                   <a class="dropdown-item" data-id="3" href="javascript:void(0);">Store 3</a>
-                </div>
+                </div>-->
               </div>
 
             </div>
@@ -59,7 +82,7 @@
           <div class="col-sm">
             <div class="form-group">
               <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="is_active">
+                <input type="checkbox" class="form-check-input" id="is_active"  checked="checked" />
                 <label class="form-check-label" for="is_active">Active?</label>
               </div>
             </div>
@@ -69,7 +92,7 @@
         <div class="form-row" style="margin-top:10px;">
           <div style="position:relative;">
             <a class='btn btn-outline-secondary chooseDealButton' href='javascript:;'>
-              Choose Deal Image
+              <span style="">Choose Deal Image</span>
               <input id ="imgInp" type="file" style='position:absolute;z-index:2;top:0;left:0;filter: alpha(opacity=0);-ms-filter:"progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";opacity:0;background-color:transparent;color:transparent;' name="file_source" size="40"  onchange='readImage(this);'/>
             </a>
             &nbsp;
@@ -82,7 +105,7 @@
         </div>
         <p style="font-size:80%;">If you do not upload an image, we will use a generic image.</p>
         <hr>
-        <button type="button" class="btn btn-outline-secondary" id="addStoreDeal">Add Deal</button>
+        <button type="button" class="btn btn-outline-success" id="addStoreDeal">Add Deal</button>
       </form>
     </div>
   </div>
