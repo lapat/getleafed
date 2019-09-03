@@ -16,6 +16,7 @@
   <script src="/__/firebase/6.1.1/firebase-functions.js"></script>
   <script src="/__/firebase/6.4.2/firebase-database.js"></script>
   <script src="/__/firebase/6.4.2/firebase-storage.js"></script>
+
   <!-- initialize the SDK after all desired features are loaded -->
   <script src="/__/firebase/init.js"></script>
 
@@ -44,13 +45,16 @@
   <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
     <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
       <li class="nav-item active">
-        <a class="nav-link" href="/#/deals" >Deals</a>
+        <a class="nav-link" href="/#/" >Deals</a>
       </li>
       <!--<li class="nav-item">
         <a class="nav-link" href="#">Events</a>
       </li>-->
-      <li class="nav-item">
+      <!--<li class="nav-item">
         <a class="nav-link postADeal" href="#">Post A Deal</a>
+      </li>-->
+      <li class="nav-item userProfileMenu">
+        <a class="nav-link" href="/#/user_profile">Profile</a>
       </li>
       <li class="nav-item">
         <a class="nav-link" href="http://eepurl.com/gBKL7f">Subscribe To Get Latest Deals</a>
@@ -112,7 +116,7 @@
   </span>
 </div>
 
-<div ng-app="getleafedApp" ng-view style=""></div>
+<div ng-app="getleafedApp" id="restOfBody" ng-view style=""></div>
 
 
 

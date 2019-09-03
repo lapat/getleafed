@@ -12,26 +12,25 @@
   </p>-->
 
   <div class="row" style="margin-bottom:10px;">
+
     <div class="col-sm">
-      <form class="form-inline my-2 my-lg-0">
-        <!--<a class="" href="#" style="margin-right:10px;">Subscribe To Our Latest Deals</a>-->
-        <div class="input-group mb-2">
-          <div class="input-group-prepend">
-            <div class="input-group-text"><i class="fas fa-map-marker-alt"></i></div>
+      <form class="form-inline my-2 my-lg-0" id="">
+        <div class="input-group mb-2" id="locationInputDeals">
+          <div class="input-group-prepend" id="">
+            <div class="input-group-text" id=""><i class="fas fa-map-marker-alt"></i></div>
           </div>
-          <input type="text" class="form-control" id="inlineFormInputGroup" placeholder="Location: Chicago, Ill">
+          <input type="text" class="form-control locationValue" id="inlineFormInputGroup" placeholder="Location: Chicago">
         </div>
       </form>
     </div>
 
     <div class="col-sm">
       <form class="form-inline my-2 my-lg-0">
-
-      <div class="input-group mb-2">
+      <div class="input-group mb-2" id="otherSearch">
         <div class="input-group-prepend">
           <div class="input-group-text"><i class="fas fa-search"></i></div>
         </div>
-        <input type="text" class="form-control" id="inlineFormInputGroup" placeholder="Search: Sativa Ounces">
+        <input type="text" class="form-control otherSearchValue" id="inlineFormInputGroup" placeholder="Search: Sativa Ounces">
       </div>
     </form>
     </div>
@@ -40,9 +39,16 @@
   <div class="row">
     <div class="col-sm">
       <div id="filters" class="button-group">  <button class="button is-checked" data-filter="*">Show All</button>
-        <button class="button" data-filter=".metal">Leaf</button>
-        <button class="button" data-filter=".transition">Vape</button>
-        <button class="button" data-filter=".alkali, .alkaline-earth">Edibles</button><!--
+        <button class="button leafButton" data-filter=".leaf">Leaf</button>
+        <button class="button vapeButton" data-filter=".vape">Vape</button>
+        <button class="button ediblesButton" data-filter=".edibles">Edibles</button>
+        <button class="button ediblesButton" data-filter=".cbd">CBD</button>
+        <button class="button ediblesButton" data-filter=".kratom">Kratom</button>
+        <!--
+
+
+        <!--
+          <button class="button" data-filter=".alkali, .alkaline-earth">Edibles</button>
           <button class="button" data-filter=":not(.transition)">Concentrates</button>
           <button class="button" data-filter=".metal:not(.transition)">metal but not transition</button>
           <button class="button" data-filter="numberGreaterThan50">number > 50</button>
@@ -51,9 +57,11 @@
       </div>
       <div class="col-sm">
         <div id="sorts" class="button-group">
-          <button class="button is-checked" data-sort-by="name">Newest</button>
-          <button class="button" data-sort-by="symbol">Closest</button>
-          <button class="button" data-sort-by="number">Best Deals</button>
+          <button class="button is-checked" data-sort-by="utcTime">Newest</button>
+          <button class="button" data-sort-by="views">Views</button>
+          <button class="button" data-sort-by="distanceaway">Closest</button>
+          <button class="button" data-sort-by="likes">Hot Deals</button>
+
         </div>
       </div>
     </div>
@@ -61,32 +69,52 @@
 
     <div class="grid" >
 
-      <span ng-repeat="aDeal in deals" ng-click="clickedOnDeal(aDeal)">
 
-      <div class="element-item transition metal " data-category="transition">
-        <img src={{aDeal.image_name}} class="img-fluid rounded mx-auto d-block" style=""><br>
-        <h5 style="font-weight:bold;font-size:150%;">
+      <span ng-repeat="aDeal in deals" ng-click="clickedOnDealOnDealsPage(aDeal)">
+
+      <div class="element-item {{cleanString(aDeal.type)}} {{cleanString(aDeal.store_data.city)}} {{cleanString(aDeal.deal_name)}} {{cleanString(aDeal.store_data.store_name)}}" data-category="">
+
+        <img src={{aDeal.image_name}} class="img-fluid" style="max-height:150px;">
+        <span style="font-weight:bold;font-size:100%;" class="theDealName">
           {{aDeal.deal_name}}
-        </h5>
-        <p style="font-size: 14px;">
-          {{aDeal.deal_description}}
+        </span>
+        <p style="font-size: 70%;color:grey;">
+          {{aDeal.store_data.store_name}}
         </p>
-        <span style='color:red;text-decoration:line-through;font-size: 12px;'>$199</span>
-        <span style="font-size: 12px;"> $70</span>
-        <p class="distance"> <i class="fas fa-map-marker-alt" style="margin-right:5px;font-size:85%;"></i><span style="font-size:85%">2 miles</span></p>
+        <p style="font-size: 14px;">
+          {{handleDescription(aDeal.deal_description)}}
+        </p>
+        <span class="prices">
+
+        <span style='color:red;text-decoration:line-through;font-size: 12px;'>{{handleCurrency(aDeal.previous_price)}}</span>
+        <span style="font-size: 12px;"> {{handleCurrency(aDeal.new_price)}} </span>
+        </span>
+        <span class="distance">
+          <i class="fas fa-map-marker-alt" style="margin-right:5px;font-size:85%;"></i>
+          <span style="font-size:85%">{{aDeal.store_data.city}}</span>
+        </span>
+        <!--<span class="distanceAwayLocation">
+          <span style="font-size:55%;" class="distanceaway">{{handleDistanceAway(aDeal.store_data.distance_away)}}</span>
+
+          <span style="font-size:55%;" >miles away</span>
+        </span>-->
+
+        <span class="utcTime" style="display:none" >{{aDeal.utc_time}}</span>
+
         <span class="rightBottom">
           <i class="fas fa-eye" style="font-size:85%"></i>
-          <span style="font-size:80%">924</span>
+          <span style="font-size:80%" class="views">{{handleLikesViews(aDeal.views)}}</span>
 
-          <i class="heart fa fa-heart-o" style="font-size:85%"></i>
-          <span style="font-size:80%">22</span>
+          <a ><i ng-click="clickedOnHeart(aDeal, $event)" class="heart fa {{handleHeartClass(a)}}" style="font-size:85%"></i></a>
+          <span style="font-size:80%" class="likes">{{handleLikesViews(aDeal.likes)}}</span>
         </span>
       </div>
       </span>
 
 
 
-      <div class="element-item metalloid " data-category="metalloid">
+<!--
+      <div class="element-item metalloid Leaf" data-category="metalloid">
         <img src="images/b.jpg" class="img-fluid rounded mx-auto d-block" style=""><br>
         <h5 style="font-weight:bold;font-size:150%;">
           Maui Wowwwwi
@@ -171,7 +199,7 @@
         <p class="number">27</p>
         <p class="weight">58.933</p>
       </div>
-      <div class="element-item lanthanoid metal inner-transition " data-category="lanthanoid">
+      <div class="element-item lanthanoid metal inner-transition Vape" data-category="lanthanoid">
         <h3 class="name">Ytterbium</h3>
         <p class="symbol">Yb</p>
         <p class="number">70</p>
@@ -183,25 +211,27 @@
         <p class="number">18</p>
         <p class="weight">39.948</p>
       </div>
-      <div class="element-item diatomic nonmetal " data-category="diatomic">
+      <div class="element-item diatomic nonmetal Leaf" data-category="diatomic">
         <h3 class="name">Nitrogen</h3>
         <p class="symbol">N</p>
         <p class="number">7</p>
         <p class="weight">14.007</p>
       </div>
-      <div class="element-item actinoid metal inner-transition " data-category="actinoid">
+      <div class="element-item actinoid metal inner-transition Vape" data-category="actinoid">
         <h3 class="name">Uranium</h3>
         <p class="symbol">U</p>
         <p class="number">92</p>
         <p class="weight">238.029</p>
       </div>
-      <div class="element-item actinoid metal inner-transition " data-category="actinoid">
+      <div class="element-item actinoid metal inner-transition Vape" data-category="actinoid">
         <h3 class="name">Plutonium</h3>
         <p class="symbol">Pu</p>
         <p class="number">94</p>
         <p class="weight">(244)</p>
       </div>
+      -->
     </div>
+
     <div class="text-center">
       <a href="" style="font-size:32px;"> Show More</a>
     </div>

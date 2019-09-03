@@ -1,0 +1,70 @@
+<div class="container" style="margin-top:10px;"   ng-cloak>
+  <div class="card">
+    <div class="card-body">
+
+      <h5 class="card-title-deal">Your Profile</h5>
+      <p class="card-text">We'll use your address to only send you deals that are closest to where you live.</p>
+
+      <form style="margin-bottom:10px;">
+        <div class="form-row">
+          <div class="col-sm">
+            <div class="form-group">
+              <input  class="form-control" id="first_name" placeholder="First Name" value={{user_profile.first_name}}>
+            </div>
+          </div>
+          <div class="col-sm">
+            <div class="form-group">
+              <input  class="form-control" id="last_name" placeholder="Last Name">
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col-sm">
+            <input type="text" class="form-control" id="email" placeholder="Email">
+          </div>
+
+        </div>
+        <br>
+
+        <div class="row">
+          <div class="col-9">
+            <div class="form-group" >
+              <input type="text" class="form-control street_address" id="street_address" placeholder="Street Address">
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <input type="text"  class="form-control" id ="suite" placeholder="Suite">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-3">
+            <div class="form-group">
+              <input  class="form-control" id="zip"  placeholder="Zip">
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group">
+              <input  class="form-control city" id="city"  placeholder="City">
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <input  class="form-control state" id="state"  placeholder="State">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-check" style="margin-left:20px;">
+              <input type="checkbox" class="form-check-input" id="subscribed"  checked="checked" />
+              <label class="form-check-label" for="subscribed">Subscribe To Email Newsletter Get Personalized Deals?</label>
+            </div>
+          </div>
+        </div>
+
+          <button type="button" class="btn btn-outline-success" id="updateUserProfile">Update</button>
+
+      </form>
+    </div>
+  </div>
+</div>

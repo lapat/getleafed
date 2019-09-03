@@ -9,20 +9,27 @@ if (!firebase.apps.length) {
 }else{
   console.log("ALREADY INIT")
 }
-
+var $grid;
+var filterFns;
 var firebase_user_object;
 var signedIn = false;
 var stores;
 var store_selected;
-firebase.functions().useFunctionsEmulator("http://localhost:5001")
+var allDealsRetrieved=null;
+var local_lat;
+var local_lng;
+//firebase.functions().useFunctionsEmulator("http://localhost:5001")
 var addUpdateDeal = firebase.functions().httpsCallable('addUpdateDeal');
 var getDealsForStore = firebase.functions().httpsCallable('getDealsForStore');
 var deleteDeal =  firebase.functions().httpsCallable('deleteDeal');
 var addUpdateStore = firebase.functions().httpsCallable('addUpdateStore');
+var addUpdateUser = firebase.functions().httpsCallable('addUpdateUser');
+var getUserProfile = firebase.functions().httpsCallable('getUserProfile');
 var getStores = firebase.functions().httpsCallable('getStores');
 var deleteStore = firebase.functions().httpsCallable('deleteStore');
 var getDeals = firebase.functions().httpsCallable('getDeals');
-
+var updateLikes =  firebase.functions().httpsCallable('updateLikes');
+var updateViewsForDeal = firebase.functions().httpsCallable('updateViewsForDeal')
 
 var getLeafed = angular.module('getleafedApp', ['ngRoute', 'ngSanitize']);
 
@@ -52,11 +59,64 @@ getLeafed.config(function($routeProvider) {
     templateUrl : 'pages/post_a_deal.html',
     controller  : 'postDealController',
   })
+  .when('/user_profile', {
+    templateUrl : 'pages/user_profile.html',
+    controller  : 'userDealController',
+  })
+  //user_profile
   //
 })
-var $grid;
-var filterFns;
 
+getLeafed.controller('userDealController', function($scope, $location) {
+  console.log("userDealController")
+  navBarUser();
+  showBody();
+
+  getUserProfileHelper($scope);
+
+  $("#updateUserProfile").on('click', function(e) {
+    addUpdateUserFunction($scope)
+  })
+})
+
+function getUserProfileHelper($scope){
+  console.log("getUserProfileHeleper")
+  blockIt();
+  getUserProfile()
+  .then( function(result) {
+    console.log('getUserProfileHeleper', result);
+    $scope.$apply(function () {
+      $scope.user_profile = result.data;
+      $.unblockUI();
+    })
+  }).catch(function(error) {
+    $.unblockUI();
+    bootbox.alert("There was an error, please contact support: "+error)
+  });
+}
+
+function addUpdateUserFunction($scope){
+  console.log("addUpdateUserFunction")
+  blockIt();
+  var data = checkUserData();
+  if (data === false){
+    $.unblockUI();
+    return;
+  }
+  console.log("sending up this data:"+JSON.stringify(data))
+  addUpdateUser(data)
+  .then( function(result) {
+    console.log('addUpdateUser', result);
+    $scope.$apply(function () {
+      //$.unblockUI();
+      bootbox.alert("Your profile was updated successfully.")
+      getUserProfileHelper($scope)
+    })
+  }).catch(function(error) {
+    $.unblockUI();
+    bootbox.alert("There was an error, please contact support: "+error)
+  });
+}
 
 getLeafed.controller('postDealController', function($scope, $location) {
   console.log("postDealController")
@@ -81,17 +141,17 @@ getLeafed.controller('postDealController', function($scope, $location) {
 
   $(function(){
     /*$(".whichStoreDropDown").on("click", "a", function(event){
-      var selected = $(this).html();
-      console.log("You clicked the drop downs", selected, " id:"+$(this).attr("data-id"))
-      $('.whichStore').text(selected)
-      $('.whichStore').attr('data-id', $(this).attr('data-id'));
-      console.log("id is now:" + $('.whichStore').attr("data-id"))
-    })*/
-  })
+    var selected = $(this).html();
+    console.log("You clicked the drop downs", selected, " id:"+$(this).attr("data-id"))
+    $('.whichStore').text(selected)
+    $('.whichStore').attr('data-id', $(this).attr('data-id'));
+    console.log("id is now:" + $('.whichStore').attr("data-id"))
+  })*/
+})
 
-  $( "#addStoreDeal" ).click(function() {
-      addUpdateDealFunctionHelper($scope, null)
-  })
+$( "#addStoreDeal" ).click(function() {
+  addUpdateDealFunctionHelper($scope, null)
+})
 })
 
 function addUpdateDealFunctionHelper($scope, dealToUpdate){
@@ -208,13 +268,13 @@ getLeafed.controller('storeDealsController', function($scope, $location) {
   checkForStores($scope)
 
   $scope.handleActive = function(is_active){
-      console.log("handleActive")
-      if (is_active){
-        return '<p style="color:green;">Yes</p>'
-      }else{
-        return '<p style="color:red;">No</p>'
-      }
+    console.log("handleActive")
+    if (is_active){
+      return '<p style="color:green;">Yes</p>'
+    }else{
+      return '<p style="color:red;">No</p>'
     }
+  }
 
   $(function(){
     $(".dealTypeDropDown").on("click", "a", function(event){
@@ -232,127 +292,127 @@ getLeafed.controller('storeDealsController', function($scope, $location) {
     store_selected = aStore
   }
   /*$(function(){
-    $(".whichStoreDropDown").on("click", "a", function(event){
-      var selected = $(this).html();
-      console.log("You clicked the drop downs", selected, " id:"+$(this).attr("data-id"))
-      $('.whichStore').text(selected)
-      $('.whichStore').attr('data-id', $(this).attr('data-id'));
-      console.log("id is now:" + $('.whichStore').attr("data-id"))
-    })
-  })*/
+  $(".whichStoreDropDown").on("click", "a", function(event){
+  var selected = $(this).html();
+  console.log("You clicked the drop downs", selected, " id:"+$(this).attr("data-id"))
+  $('.whichStore').text(selected)
+  $('.whichStore').attr('data-id', $(this).attr('data-id'));
+  console.log("id is now:" + $('.whichStore').attr("data-id"))
+})
+})*/
 
-  //deleteDealButton
-  $( ".deleteDealButton" ).click(function() {
-    console.log("deleteDealButton")
-    deleteDealHelper($scope, lastDealClickedOn)
-  })
+//deleteDealButton
+$( ".deleteDealButton" ).click(function() {
+  console.log("deleteDealButton")
+  deleteDealHelper($scope, lastDealClickedOn)
+})
 
-  //set when clicked on row
-  var lastDealClickedOn=null;
-  $( ".updateStoreDeal" ).click(function() {
-    console.log("updateStoreDeal")
-    addUpdateDealFunctionHelper($scope, lastDealClickedOn)
-  })
+//set when clicked on row
+var lastDealClickedOn=null;
+$( ".updateStoreDeal" ).click(function() {
+  console.log("updateStoreDeal")
+  addUpdateDealFunctionHelper($scope, lastDealClickedOn)
+})
 
-  $scope.handleImage = function(imageLocation){
-    console.log("handleImage")
-    if (imageLocation !=='' && imageLocation !==null && imageLocation !==undefined){
-      return imageLocation
-    }else{
-      return "/images/temp.jpg"
-    }
+$scope.handleImage = function(imageLocation){
+  console.log("handleImage")
+  if (imageLocation !=='' && imageLocation !==null && imageLocation !==undefined){
+    return imageLocation
+  }else{
+    return "/images/temp.jpg"
   }
+}
 
-  //handleNull(
-  $scope.handleNull = function(isNull){
-    if (isNull===undefined || isNull === null || isNull===''){
-      return 0;
-    }
-    return isNull
+//handleNull(
+$scope.handleNull = function(isNull){
+  if (isNull===undefined || isNull === null || isNull===''){
+    return 0;
   }
+  return isNull
+}
 
-  $scope.convertToPrettyTime = function(utcTime){
-    console.log("convertToPrettyTime")
-    //return 1;
-    var date = new Date(Number(utcTime)*1000)
-    var monthNames = [
-      "January", "February", "March",
-      "April", "May", "June", "July",
-      "August", "September", "October",
-      "November", "December"
-    ];
+$scope.convertToPrettyTime = function(utcTime){
+  console.log("convertToPrettyTime")
+  //return 1;
+  var date = new Date(Number(utcTime)*1000)
+  var monthNames = [
+    "January", "February", "March",
+    "April", "May", "June", "July",
+    "August", "September", "October",
+    "November", "December"
+  ];
 
-    var day = date.getDate();
-    var monthIndex = date.getMonth();
-    var year = date.getFullYear();
+  var day = date.getDate();
+  var monthIndex = date.getMonth();
+  var year = date.getFullYear();
 
-    return  monthNames[monthIndex] + ' ' + day + ', ' + year;
-  }
+  return  monthNames[monthIndex] + ' ' + day + ', ' + year;
+}
 
-  $(".addDealRow").on('click', function(e) {
-    e.preventDefault();
-    $('.deleteDealButton').hide();
+$(".addDealRow").on('click', function(e) {
+  e.preventDefault();
+  $('.deleteDealButton').hide();
+  store_selected = null;
+  document.getElementById("imgInp").files = null;
+  $('#dealImage').attr('src', '');
+  $('#dealImage').hide();
+  $('#modalLabel').text("Add Deal")
+  $(document).ready(function(){
+    $('#deal_name').val("")
+    $('#deal_description').val("")
+    $('.dealType').text("Type")
+    $('#previous_price').val("")
+    $('#new_price').val("")
+    $('.whichStore').text("Which Store")
+    $('#is_active').prop('checked', true);
+    $('#modal').modal('show');
     store_selected = null;
+
+  })
+  //console.log("aDeal:"+JSON.stringify(aDeal))
+});
+
+$scope.clickedOnDealRow = function(aDeal){
+  lastDealClickedOn = aDeal;
+  $(document).ready(function(){
+    $('#modalLabel').text("Update Deal")
     document.getElementById("imgInp").files = null;
     $('#dealImage').attr('src', '');
     $('#dealImage').hide();
-    $('#modalLabel').text("Add Deal")
-    $(document).ready(function(){
-      $('#deal_name').val("")
-      $('#deal_description').val("")
-      $('.dealType').text("Type")
-      $('#previous_price').val("")
-      $('#new_price').val("")
-      $('.whichStore').text("Which Store")
+    //dealImage
+    $('.deleteDealButton').show();
+    console.log("aDeal.type:"+aDeal.type)
+    //$('#deal_name').val(aDeal.deal_name)
+    $('#deal_name').val(aDeal.deal_name)
+    $('#deal_description').val(aDeal.deal_description)
+    $('.dealType').text(aDeal.type)
+    $('#previous_price').val(aDeal.previous_price)
+    $('#new_price').val(aDeal.new_price)
+    $('.whichStore').text(aDeal.which_store)
+    //store_selected = aStore
+
+    $('.whichStore').attr('data-id', aDeal.store_id);
+    if (aDeal.is_active){
       $('#is_active').prop('checked', true);
-      $('#modal').modal('show');
-      store_selected = null;
-
-    })
-    //console.log("aDeal:"+JSON.stringify(aDeal))
-  });
-
-  $scope.clickedOnDealRow = function(aDeal){
-    lastDealClickedOn = aDeal;
-    $(document).ready(function(){
-      $('#modalLabel').text("Update Deal")
-      document.getElementById("imgInp").files = null;
+    }else{
+      $('#is_active').prop('checked', false);
+    }
+    //dealImage
+    if (aDeal.image_name !== ''){
+      $('#dealImage').attr('src', aDeal.image_name);
+      $('#dealImage').show();
+    }else{
       $('#dealImage').attr('src', '');
       $('#dealImage').hide();
-      //dealImage
-      $('.deleteDealButton').show();
-      console.log("aDeal.type:"+aDeal.type)
-      //$('#deal_name').val(aDeal.deal_name)
-      $('#deal_name').val(aDeal.deal_name)
-      $('#deal_description').val(aDeal.deal_description)
-      $('.dealType').text(aDeal.type)
-      $('#previous_price').val(aDeal.previous_price)
-      $('#new_price').val(aDeal.new_price)
-      $('.whichStore').text(aDeal.which_store)
-      //store_selected = aStore
+    }
+    $('#modal').modal('show');
+  })
+  console.log("aDeal:"+JSON.stringify(aDeal))
+};
 
-      $('.whichStore').attr('data-id', aDeal.store_id);
-      if (aDeal.is_active){
-        $('#is_active').prop('checked', true);
-      }else{
-        $('#is_active').prop('checked', false);
-      }
-      //dealImage
-      if (aDeal.image_name !== ''){
-        $('#dealImage').attr('src', aDeal.image_name);
-        $('#dealImage').show();
-      }else{
-        $('#dealImage').attr('src', '');
-        $('#dealImage').hide();
-      }
-      $('#modal').modal('show');
-    })
-    console.log("aDeal:"+JSON.stringify(aDeal))
-  };
+getDealsForStoreHelper($scope);
 
-  getDealsForStoreHelper($scope);
-
-  /*$('#dealsTable').scrollTableBody();*/
+/*$('#dealsTable').scrollTableBody();*/
 })
 
 function deleteStoreHelper($scope, lastStoreClickedOn){
@@ -401,14 +461,14 @@ function getDealsForStoreHelper($scope){
       //$scope.store_deals=[{date : 'kdkdkdk'}, {date : 'kasdfasdfasdfas'}, {date : 'a'}]
       $scope.store_deals=result.data;
       //setTimeout(function () {
-        //$('#dealsTable').DataTable( {
-        //    "destroy": true,
-        //    "paging":   false,
-        //    "ordering": true
-        //  });
-        //}, 2000);
-        //})
-      })
+      //$('#dealsTable').DataTable( {
+      //    "destroy": true,
+      //    "paging":   false,
+      //    "ordering": true
+      //  });
+      //}, 2000);
+      //})
+    })
   }).catch(function(error) {
     $.unblockUI();
     bootbox.alert("There was an error, please contact support: "+error)
@@ -421,7 +481,7 @@ function checkForStores($scope){
     console.log('checkForStores', result);
     $scope.$apply(function () {
       //$.unblockUI();
-        //$scope.stores=result.data;
+      //$scope.stores=result.data;
       //})
       stores = result.data;
       if (result.data.length>0){
@@ -451,13 +511,13 @@ function getStoresHelper($scope){
     console.log('getStoresFunction', result);
     $scope.$apply(function () {
       $.unblockUI();
-        $scope.stores=result.data;
-      })
-      if (result.data.length>0){
-        $('.showStoreTable').show();
-      }else{
-        $('.showStoreTable').hide();
-      }
+      $scope.stores=result.data;
+    })
+    if (result.data.length>0){
+      $('.showStoreTable').show();
+    }else{
+      $('.showStoreTable').hide();
+    }
   }).catch(function(error) {
     $.unblockUI();
     bootbox.alert("There was an error, please contact support: "+error)
@@ -471,6 +531,9 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
   showBody();
 
   getStoresHelper($scope);
+
+  console.log("CALLING LOAD GEOCODE...")
+
 
   $scope.clickedOnStoreRow = function(aStore){
     storeToUpdate = aStore;
@@ -499,17 +562,26 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
   })
 
   $(".saveStore").on('click', function(e) {
+
     addUpdateStoreFunction($scope, storeToUpdate)
   })
 
-    $( ".deleteStoreButton" ).click(function() {
-      console.log("deleteStoreButton")
-      deleteStoreHelper($scope, storeToUpdate)
-    })
+  $( ".deleteStoreButton" ).click(function() {
+    console.log("deleteStoreButton")
+    deleteStoreHelper($scope, storeToUpdate)
+  })
 
 })
 
-
+function checkLocalDeals(dealId){
+  var index;
+  for (index in allDealsRetrieved){
+    if (allDealsRetrieved[index].id === dealId){
+      return allDealsRetrieved[index]
+    }
+  }
+  return null;
+}
 function addUpdateStoreFunction($scope, storeToUpdate){
   console.log("addUpdateStoreFunction")
   blockIt();
@@ -527,17 +599,42 @@ function addUpdateStoreFunction($scope, storeToUpdate){
     data['id'] = storeToUpdate.id;
   }
   $('#addStoreModal').modal('hide')
+  //  loadGeocoderAndConvertToGps("1103 Mulford Street, Evanston, Illinois, 60202", "Evanston")
+
+  geocoder = new google.maps.Geocoder();
+
+
+  geocoder.geocode( { 'address': data.store_address}, function(results, status) {
+    if (status == 'OK') {
+      console.log("GOT IT:"+results[0].geometry.location)
+      console.log("lat:"+results[0].geometry.location.lat())
+
+      //data[location]=results[0].geometry.location;
+      data['gps_lat'] = results[0].geometry.location.lat();
+      data['gps_lng'] = results[0].geometry.location.lng();
+
+      //data['location']= new firebase.firestore.GeoPoint(results[0].geometry.location.lat(), results[0].geometry.location.lng())
+      addUpdateStoreHelper(data, $scope)
+    } else {
+      console.log("could not get GPS")
+      addUpdateStoreHelper(data, $scope)
+    }
+  });
+
+}
+
+function addUpdateStoreHelper(data, $scope){
   addUpdateStore(data)
   .then( function(result) {
     console.log('addUpdateStore', result);
     $scope.$apply(function () {
       //$.unblockUI();
       if (storeToUpdate !==null){
-      bootbox.alert("Your store was updated successfully.")
-    }else{
-      bootbox.alert("Your store was added successfully.")
+        bootbox.alert("Your store was updated successfully.")
+      }else{
+        bootbox.alert("Your store was added successfully.")
 
-    }
+      }
       clearAddStoreInputs();
       getStoresHelper($scope)
     })
@@ -553,33 +650,280 @@ getLeafed.controller('subscribeController', function($scope, $location) {
   showBody();
 })
 
+function updateViewForDealFunction(aDeal, $scope){
+
+  if (aDeal.hasOwnProperty('views')){
+    console.log("has views aDeal.views:"+aDeal.views)
+    aDeal['views'] = Number(aDeal.views) + 1;
+  }else{
+    console.log("no views")
+
+    aDeal['views'] = 1;
+  }
+
+  console.log("aDeal:"+JSON.stringify(aDeal))
+  updateViewsForDeal(aDeal)
+  .then( function(result) {
+    console.log('pdateViewForDealFunction storeName', result);
+    $scope.$apply(function () {
+      aDeal['views'] = result.data.views
+
+    })
+  }).catch(function(error) {
+    //bootbox.alert("There was an error, please contact support: "+error)
+  });
+}
+
 getLeafed.controller('aSingleDealController', function($scope, $location) {
   console.log("aSingleDealController")
   navBarUser();
+  $('#restOfBody').hide();
   //codeGoogleMapAddress(cannabis_taxi_user_local.street_address + ", " + cannabis_taxi_user_local.city + ", "+ cannabis_taxi_user_local.state + " " + cannabis_taxi_user_local.zip)
-  codeGoogleMapAddress("1103 Mulford Street, Evanston, Illinois, 60202")
-  showBody();
+  var dealId=getParameter("d");
+  if(dealId===null || dealId===undefined || dealId===""){
+    bootbox.alert("Error, no deal id was specified.");
+    return;
+  }
+
+  $scope.handleHeartClass = function(aDeal){
+    console.log("handleHeartClass")
+      return handleHeartClassFunction(aDeal)
+  }
+
+  $scope.clickedOnHeart = function(aDeal, e){
+    clickedOnHeartFunction(aDeal, $scope, e)
+  }
+
+
+  var localDeal = checkLocalDeals(dealId);
+  if (localDeal!==null){
+    $scope.deal_picked = localDeal;
+    if ($scope.deal_picked.store_data.store_address!==undefined && $scope.deal_picked.store_data.store_address!==null && $scope.deal_picked.store_data.store_address!==""){
+      codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+    }
+    showBody();
+    $('#restOfBody').show();
+
+    getSideBarDealPage($scope, $scope.deal_picked);
+  }else{
+    blockIt();
+    getDeals({id:dealId})
+    .then( function(result) {
+      console.log('getDeals', result);
+      $scope.$apply(function () {
+        $.unblockUI();
+        $scope.deal_picked = result.data;
+        updateViewForDealFunction($scope.deal_picked, $scope);
+        codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+        showBody();
+        $('#restOfBody').show();
+        getSideBarDealPage($scope, $scope.deal_picked);
+      })
+    }).catch(function(error) {
+      $.unblockUI();
+      bootbox.alert("There was an error, please contact support: "+error)
+    });
+  }
+
+
+  $scope.clickedOnDealAtSameStore = function(aDeal){
+    console.log('clickedOnDealOnDealPage aDeal:'+JSON.stringify(aDeal))
+    window.location.href="/#/deal?d="+aDeal.id
+  }
+
+  $(".printMe").click(function() {
+    console.log("PRINT ME")
+
+    window.print();
+
+  })
+
+  $scope.handleCurrency = function(currency){
+    return handleCurrencyFun(currency);
+  }
+
+  $scope.handleLikesViews=function(viewsLikes){
+    if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
+      return Number(0)
+    }else{
+      return Number(viewsLikes)
+    }
+  }
+
 })
+
+
+
+function getSideBarDealPage($scope, deal_picked){
+  console.log("getSideBarDealPage deal_picked:"+JSON.stringify(deal_picked))
+  getDeals({'store_name':deal_picked.store_data.store_name})
+  .then( function(result) {
+    console.log('getDeals storeName', result);
+    $scope.$apply(function () {
+      $scope.dealsAtSameStore = result.data
+      //$.unblockUI();
+      //$scope.deal_picked = result.data;
+      //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+      //showBody();
+    })
+  }).catch(function(error) {
+    //bootbox.alert("There was an error, please contact support: "+error)
+  });
+  getDeals({'city':deal_picked.store_data.city})
+  .then( function(result) {
+    console.log('getDeals city', result);
+    $scope.$apply(function () {
+      $scope.dealsAtSameCity = result.data
+
+      //$scope.dealsAtSameStore = result.data
+      //$.unblockUI();
+      //$scope.deal_picked = result.data;
+      //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+      //showBody();
+    })
+  }).catch(function(error) {
+    //bootbox.alert("There was an error, please contact support: "+error)
+  });
+}
 
 getLeafed.controller('dealsController', function($scope, $location) {
   console.log("dealsController")
   navBarUser();
-  showBody();
-  getDealsFunction($scope)
-  // bind filter button click
-  $('.element-item').click(
-    function(){
-      window.location.href = "/#/deal"
-    }
-  )
+  $('#restOfBody').hide();
 
+
+  var searchParameter = getParameter("s")
+  //To Do - search by search parameter if it's a cache load
+  showBody();
+  if (allDealsRetrieved!==null){
+    $.unblockUI();
+    $scope.deals=allDealsRetrieved;
+    $('#restOfBody').show();
+    jQuery( function() {
+      loadOtherFunctionsForDeals()
+    })
+  }else{
+    getDealsFunction($scope, searchParameter)
+  }
+
+  $scope.handleHeartClass = function(aDeal){
+      //$scope.$apply(function () {
+        return handleHeartClassFunction(aDeal)
+      //})
+  }
+
+
+  $scope.handleDescription = function(description){
+      if (description === undefined){
+        return ""
+      }
+      if (description.length>80){
+        return description.substring(0,90)+"..."
+      }
+      return description;
+  }
+
+  $scope.clickedOnHeart = function(aDeal, e){
+    clickedOnHeartFunction(aDeal, $scope, e)
+  }
+
+  $scope.clickedOnDealOnDealsPage = function(aDeal){
+    console.log('clickedOnDealOnDealsPage aDeal:'+JSON.stringify(aDeal))
+    window.location.href="/#/deal?d="+aDeal.id
+  }
+
+  $scope.cleanString = function(str){
+    return cleanString(str)
+
+  }
+
+  $scope.handleDistanceAway=function(d){
+    if (d===undefined || d === "" || d ==null){
+      return Number(0)
+    }else{
+      return Number(d)
+    }
+  }
+
+  $scope.handleLikesViews=function(viewsLikes){
+    if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
+      return Number(0)
+    }else{
+      return Number(viewsLikes)
+    }
+  }
+
+  $scope.handleCurrency=function(amount){
+    return handleCurrencyFun(amount)
+
+  }
+  // bind filter button click
+
+
+  //$(".heart.fa").click(function() {
+  //  $(this).toggleClass("fa-heart fa-heart-o");
+  //  console.log("CLICKED")
+  //});
+
+})
+
+function clickedOnHeartFunction(aDeal, $scope, e){
+console.log("heart")
+e.stopPropagation();
+e.preventDefault();
+if (firebase_user_object!==undefined && firebase_user_object !== null){
+  console.log("GOOD")
+  handleLikeFunction(aDeal, $scope, e)
+}else{
+  bootbox.alert("You have to be signed in to do that.", function(){
+    window.location.href = "/signin_user.html"
+  });
+}
+}
+
+function handleHeartClassFunction(aDeal){
+  //console.log("handle heart class function")
+  if(firebase_user_object===null || firebase_user_object===undefined){
+    return "fa-heart-o"
+  }
+  var index;
+  if (thisUserLikesThisDeal(aDeal)){
+    return "fa-heart"
+  }else{
+    return "fa-heart-o"
+  }
+}
+
+function handleCurrencyFun(amount){
+  if (amount===undefined || amount === "" || amount ==null){
+    return ""
+  }
+  return "$"+formatMoney(amount)
+}
+
+function addButtonFilter(filterValue){
+  if ($('.leafButton').hasClass('is-checked')){
+    filterValue = filterValue + ".leaf"
+  }else if ($('.vapeButton').hasClass('is-checked')){
+    console.log("YES YES")
+    filterValue = filterValue + ".vape"
+  }else if ($('.ediblesButton').hasClass('is-checked')){
+    filterValue = filterValue + ".edibles"
+  }
+  return filterValue
+
+}
+
+function loadOtherFunctionsForDeals($scope){
 
   $grid = $('.grid').isotope({
     itemSelector: '.element-item',
     layoutMode: 'fitRows',
     getSortData: {
-      name: '.name',
-      symbol: '.symbol',
+      utcTime : '.utcTime parseInt',
+      views: '.views parseInt',
+      likes: '.likes parseInt',
+      distanceaway: '.distanceaway parseInt',
       number: '.number parseInt',
       category: '[data-category]',
       weight: function( itemElem ) {
@@ -603,19 +947,121 @@ getLeafed.controller('dealsController', function($scope, $location) {
     }
   };
 
-  // bind filter button click
+  //BUTTONS
   $('#filters').on( 'click', 'button', function() {
     console.log("filters")
     var filterValue = $( this ).attr('data-filter');
+    console.log("filterValue:"+filterValue+" "+JSON.stringify(filterValue))
+
+    if ($(".locationValue").val()!==''){
+      filterValue = filterValue + "." + cleanString($(".locationValue").val())
+    }
+
     // use filterFn if matches value
     filterValue = filterFns[ filterValue ] || filterValue;
+    console.log("filter value now:"+filterValue)
+    $grid.isotope({ filter: filterValue });
+    //iso.layout();
+    //$grid.isotope('layout')
+  });
+
+  //LOCATION INPUT
+  $("#locationInputDeals").on("keyup", function(){
+    // do stuff;
+    console.log("key up on location")
+    //filterValue = filterFns[ filterValue ] || filterValue;
+    console.log("loc:"+$(".locationValue").val())
+    var filterValue = cleanString($(".locationValue").val())
+    if (filterValue !== ''){
+      filterValue = "." + filterValue
+    }
+
+    //filterValue = addButtonFilter(filterValue)
+
+    //console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+    filterValue = filterFns[ filterValue ] || filterValue;
+    //console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+    $grid.isotope({ filter: filterValue });
+  });
+
+  //SEARCH INPUT
+  $("#otherSearch").on("keyup", function(){
+    // do stuff;
+    console.log("key up on otherSearchValue")
+    //filterValue = filterFns[ filterValue ] || filterValue;
+    console.log("otherSearchValue:"+$(".otherSearchValue").val())
+    var filterValue = cleanString($(".otherSearchValue").val())
+    if (filterValue !== ''){
+      filterValue = "." + filterValue
+    }
+
+    filterValue = addButtonFilter(filterValue)
+
+
+    console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+    filterValue = filterFns[ filterValue ] || filterValue;
+    console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
     $grid.isotope({ filter: filterValue });
   });
 
   // bind sort button click
   $('#sorts').on( 'click', 'button', function() {
     var sortByValue = $(this).attr('data-sort-by');
-    $grid.isotope({ sortBy: sortByValue });
+    console.log("sortByValue:"+sortByValue)
+
+    if (sortByValue==="likes"){
+      $grid.isotope({
+        sortBy: sortByValue,
+        sortAscending: false
+      });
+    }else if (sortByValue==="distanceaway"){
+      console.log("SORTING distanceAway")
+      var startPos;
+      var geoSuccess = function(position) {
+         console.log("SUCCESS")
+        console.log("lat:"+position.coords.latitude+ "lng:" +position.coords.longitude)
+          local_lat=position.coords.latitude;
+          local_lng=position.coords.longitude;
+          var index;
+
+          for (index in $scope.deals){
+            var distanceAway = distance(local_lat,
+                                                         local_lng,
+                                                         $scope.deals[index].store_data.gps_lat,
+                                                         $scope.deals[index].store_data.gps_lng,
+                                                         "M");
+            if (!isNaN(distanceAway)){
+            console.log("DISTANCE AWAY:"+distanceAway)
+            $scope.$apply(function () {
+
+              $scope.deals[index].store_data.distance_away = distanceAway.toFixed(1)
+            })
+
+            }
+          }
+
+      };
+      //Uncomment me to add distance away....took it out
+      //navigator.geolocation.getCurrentPosition(geoSuccess);
+
+
+      $grid.isotope({
+        sortBy: sortByValue,
+        sortAscending: true
+      });
+    }else if (sortByValue==="views"){
+      console.log("SORTING views")
+      $grid.isotope({
+        sortBy: sortByValue,
+        sortAscending: false
+      });
+    }else if (sortByValue==="utcTime"){
+      console.log("SORTING utcTime")
+      $grid.isotope({
+        sortBy: sortByValue,
+        sortAscending: false
+      });
+    }
   });
 
 
@@ -628,27 +1074,140 @@ getLeafed.controller('dealsController', function($scope, $location) {
     });
   });
 
-  $(".heart.fa").click(function() {
-    $(this).toggleClass("fa-heart fa-heart-o");
-    console.log("CLICKED")
+
+}
+
+function formatMoney(number, decPlaces, decSep, thouSep) {
+  decPlaces = isNaN(decPlaces = Math.abs(decPlaces)) ? 2 : decPlaces,
+  decSep = typeof decSep === "undefined" ? "." : decSep;
+  thouSep = typeof thouSep === "undefined" ? "," : thouSep;
+  var sign = number < 0 ? "-" : "";
+  var i = String(parseInt(number = Math.abs(Number(number) || 0).toFixed(decPlaces)));
+  var j = (j = i.length) > 3 ? j % 3 : 0;
+
+  return sign +
+  (j ? i.substr(0, j) + thouSep : "") +
+  i.substr(j).replace(/(\decSep{3})(?=\decSep)/g, "$1" + thouSep) +
+  (decPlaces ? decSep + Math.abs(number - i).toFixed(decPlaces).slice(2) : "");
+}
+
+
+function thisUserLikesThisDeal(aDeal){
+  //console.log("uid:"+firebase_user_object.uid)
+  if (aDeal===undefined){
+    return;
+  }
+  if (aDeal.hasOwnProperty("user_likes")){
+    console.log("hasUserLikes")
+    var index;
+    for (index in aDeal.user_likes){
+      if (aDeal.user_likes[index]===firebase_user_object.uid){
+        return true;
+      }
+    }
+  }else{
+    return false;
+  }
+  return false;
+}
+
+function handleLikeFunction(aDeal, $scope, $event){
+  var thisOne=$event.currentTarget;
+  blockIt();
+  if (thisUserLikesThisDeal(aDeal)){
+    //UNLIKE IT
+    console.log("UNLIKE IT")
+    //$(thisOne).removeClass("fa-heart");
+    //$(thisOne).addClass("fa-heart-o");
+    var thisOne=$event.currentTarget;
+    //$( document ).ready(function() {
+    $(thisOne).removeClass("fa-heart");
+    $(thisOne).addClass("fa-heart-o");
+    //})
+    aDeal['likes'] = Number(aDeal.likes) - 1
+    var index = aDeal.user_likes.indexOf(firebase_user_object.uid);
+    if (index > -1) {
+      aDeal['user_likes'].splice(index, 1);
+    }
+  }else{
+    //LIKE IT
+    console.log("LIKE IT")
+    $(thisOne).removeClass("fa-heart-o");
+    $(thisOne).addClass("fa-heart");
+    if (aDeal.hasOwnProperty('likes')){
+      aDeal['likes'] = Number(aDeal.likes) + 1
+    }else{
+      aDeal['likes'] = 1
+    }
+    if (aDeal['user_likes']===undefined || aDeal['user_likes'] === null || aDeal['user_likes'].length===0){
+      console.log("New User Likes")
+      aDeal['user_likes']= []
+      aDeal['user_likes'].push(firebase_user_object.uid)
+    }else{
+      console.log("adding")
+
+      aDeal['user_likes'].push(firebase_user_object.uid)
+    }
+    //like it
+  }
+  console.log("A DEAL NOW:"+JSON.stringify(aDeal))
+  updateLikes(aDeal)
+  .then( function(result) {
+    console.log('updateLikes', result);
+    $scope.$apply(function () {
+      $.unblockUI();
+    })
+  }).catch(function(error) {
+    $.unblockUI();
+    bootbox.alert("There was an error, please contact support: "+error)
   });
+}
 
-})
 
-function getDealsFunction($scope){
+
+function getDealsFunction($scope, searchParameter){
   blockIt();
   getDeals()
   .then( function(result) {
     console.log('getDeals', result);
     $scope.$apply(function () {
       $.unblockUI();
-        $scope.deals=result.data;
+      $scope.deals=result.data;
+      allDealsRetrieved = result.data;
+      //updateHearts();
+      $('#restOfBody').show();
+      jQuery( function() {
+        loadOtherFunctionsForDeals($scope)
+        if (searchParameter!==""){
+          /*console.log("searchParameter:"+searchParameter)
+          var filterValue = cleanString(searchParameter)
+          if (filterValue !== ''){
+            filterValue = "." + filterValue
+          }
+          filterValue = addButtonFilter(filterValue)
+
+
+          console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+          filterValue = filterFns[ filterValue ] || filterValue;
+          console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+          $grid.isotope({ filter: filterValue });*/
+        }
       })
+    })
   }).catch(function(error) {
     $.unblockUI();
     bootbox.alert("There was an error, please contact support: "+error)
   });
 
+}
+
+function cleanString(str){
+  if (str===undefined){
+    return "";
+  }
+  var returning = str.split(" ").join("-").toLowerCase();
+  //console.log("returning:"+returning)
+  return returning
 }
 
 $(".userSignIn").on('click', function(e) {
@@ -706,6 +1265,35 @@ function navBarStore(){
 
 }
 
+function checkUserData(){
+  if ($('#email').val() === ""){
+    bootbox.alert("Email can not be blank.");
+    return false;
+  }
+
+  /*  if ($('#city').val() === ""){
+  bootbox.alert("City can not be blank.");
+  return false;
+}*/
+
+var suite = ""
+if ($('#suite').val()!==''){
+  suite = $('#suite').val()+""
+}
+var data = {
+  first_name : $('#first_name').val(),
+  last_name : $('#last_name').val(),
+  email : $('#email').val(),
+  street_address : $('#street_address').val(),
+  suite : $('#suite').val(),
+  zip : $('#zip').val(),
+  city : $('#city').val(),
+  state : $('#state').val(),
+  subscribed_to_email : $("#subscribed").prop("checked"),
+  street_address : $('#street_address').val() + suite + " , " + $('#city').val()+ " , " + $('#state').val() + " " + $('#zip').val()
+}
+return data;
+}
 
 function checkStoreData(uid){
   if ($('#first_name').val() === ""){
@@ -848,6 +1436,8 @@ function handleSignIn(){
   $('.toggleSignIn').text('You Are Signed In')
   $('.userSignIn').hide();
   $('.ownerSignIn').hide();
+  $('.userProfileMenu').show();
+
   $('.signOut').show();
 }
 
@@ -855,6 +1445,8 @@ function handleSignOut(){
   console.log("handleSignOut")
   $('.toggleSignIn').text('Login')
   $('.userSignIn').show();
+  $('.userProfileMenu').hide();
+
   $('.ownerSignIn').show();
   $('.signOutUser').hide();
   $('.signOutOwner').hide();
@@ -909,6 +1501,52 @@ function makeid(length) {
   text += possible.charAt(Math.floor(Math.random() * possible.length));
   return text;
 }
+
+function getParameter(parameter){
+  if (window.location.href.split(parameter+"=").length>=2){
+    return window.location.href.split(parameter+"=")[1]
+  }
+  return ""
+}
+
+function distance(lat1, lon1, lat2, lon2, unit) {
+	if ((lat1 == lat2) && (lon1 == lon2)) {
+		return 0;
+	}
+	else {
+		var radlat1 = Math.PI * lat1/180;
+		var radlat2 = Math.PI * lat2/180;
+		var theta = lon1-lon2;
+		var radtheta = Math.PI * theta/180;
+		var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+		if (dist > 1) {
+			dist = 1;
+		}
+		dist = Math.acos(dist);
+		dist = dist * 180/Math.PI;
+		dist = dist * 60 * 1.1515;
+		if (unit=="K") { dist = dist * 1.609344 }
+		if (unit=="N") { dist = dist * 0.8684 }
+		return dist;
+	}
+}
+
+
+function loadGeocoderAndConvertToGps(address, city){
+geocoder = new google.maps.Geocoder();
+
+
+geocoder.geocode( { 'address': address}, function(results, status) {
+  console.log("GOT ADDRESS!!! address:"+address)
+  if (status == 'OK') {
+    console.log("GOT IT:"+results[0].geometry.location)
+  } else {
+    console.log("could not get GPS")
+  }
+});
+}
+
+
 // external js: isotope.pkgd.js
 
 
