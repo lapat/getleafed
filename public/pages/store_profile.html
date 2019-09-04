@@ -126,12 +126,16 @@
         <tr style="border: 0!important;">
           <th scope="col"  style="border: 0!important;font-size:100">Store Name</th>
           <th scope="col" style="border: 0!important;font-size:100">Store Address</th>
+          <th scope="col" style="border: 0!important;font-size:100">Preview</th>
+
         </tr>
       </thead>
       <tbody style="" class="myClickable">
         <tr ng-repeat="aStore in stores" ng-click="clickedOnStoreRow(aStore)">
           <td style="border-left:0;border-right:0;!important">{{aStore.store_name}}</td>
           <td style="border-left:0;border-right:0;!important">{{aStore.store_address}}</td>
+          <td style="border-left:0;border-right:0;!important"><a target="_blank" href="{{convertToSearch(aStore.store_name, $event)}}">preview deals</a></td>
+
         </tr>
       </tbody>
     </table>

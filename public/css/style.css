@@ -1,5 +1,24 @@
+.Site {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.Site-content {
+  flex: 1;
+}
 
 
+.grid {
+  background: #DDD;
+  margin: 0 auto; /* centered */
+}
+
+.grid:after {
+  content: '';
+  display: block;
+  clear: both;
+}
 
 
 
@@ -135,19 +154,17 @@ ul.nav a:hover { color: #fff !important; }
 .button-group .button:first-child { border-radius: 0.5em 0 0 0.5em; }
 .button-group .button:last-child { border-radius: 0 0.5em 0.5em 0; }
 
-/* ---- isotope ---- */
+/* ---- isotope ----
 
 .grid {
-  /*border: 1px solid #333;*/
 }
 
-/* clear fix */
 .grid:after {
   content: '';
   display: block;
   clear: both;
 }
-
+*/
 
 .heart {
   font-size: 25px;

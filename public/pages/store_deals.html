@@ -153,11 +153,12 @@ padding: 3px 5px;
   <table id ="dealsTable" class="display table table-bordered rounded compact" style="width:100%">
     <thead style="border: 0!important;">
       <tr style="border: 0!important;">
+        <th scope="col"  style="border: 0!important;font-size:100">Preview</th>
         <th scope="col"  style="border: 0!important;font-size:100">Date</th>
         <th scope="col" style="border: 0!important;font-size:100">Name</th>
         <th scope="col" style="border: 0!important;font-size:100">Details</th>
-        <th scope="col" style="border: 0!important;font-size:100">Previous Price</th>
-        <th scope="col" style="border: 0!important;font-size:100">New Price</th>
+        <!--<th scope="col" style="border: 0!important;font-size:100">Previous Price</th>
+        <th scope="col" style="border: 0!important;font-size:100">New Price</th>-->
         <th scope="col"  style="border: 0!important;font-size:100">Store</th>
         <th scope="col"  style="border: 0!important;font-size:100">Image</th>
         <th scope="col"  style="border: 0!important;font-size:100">Type</th>
@@ -218,13 +219,15 @@ padding: 3px 5px;
 
 <tr ng-repeat="aDeal in store_deals" ng-click="clickedOnDealRow(aDeal)">
 
-
+  <td style="border-left:0;border-right:0;!important">
+    <a href="" target="_blank" ng-click="clickedPreviewStoreDeals(aDeal, $event)"><i class="fas fa-link"></i></a>
+  </td>
   <td style="border-left:0;border-right:0;!important">{{convertToPrettyTime(aDeal.utc_time)}}</td>
-  <td style="border-left:0;border-right:0;!important">{{aDeal.deal_name}}</td>
-  <td style="border-left:0;border-right:0;!important">{{aDeal.deal_description}}</td>
-  <td style="border-left:0;border-right:0;!important">{{aDeal.previous_price}}</td>
-  <td style="border-left:0;border-right:0;!important">{{aDeal.new_price}}</td>
-  <td style="border-left:0;border-right:0;!important">{{aDeal.which_store}}</td>
+  <td style="border-left:0;border-right:0;!important">{{convertToShortStringIfLong(aDeal.deal_name)}}</td>
+  <td style="border-left:0;border-right:0;!important">{{convertToShortStringIfLong(aDeal.deal_description)}}</td>
+  <!--<td style="border-left:0;border-right:0;!important">{{aDeal.previous_price}}</td>
+  <td style="border-left:0;border-right:0;!important">{{aDeal.new_price}}</td>-->
+  <td style="border-left:0;border-right:0;!important">{{convertToShortStringIfLong(aDeal.which_store)}}</td>
   <td style="border-left:0;border-right:0;!important"><img style="height:30px;" src={{aDeal.image_name}}></td>
   <td style="border-left:0;border-right:0;!important">{{aDeal.type}}</td>
   <td style="border-left:0;border-right:0;!important">{{handleNull(aDeal.views)}}</td>

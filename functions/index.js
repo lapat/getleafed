@@ -16,6 +16,61 @@ sgClient1.setApiKey('SG.K5fvNAJ6QEKEO_ykzWSPZg.UNsVwygV_wYmj-wsIdTkoNCsgxFzyI96G
 
 
 
+exports.hitAllApi = functions.https.onRequest((req, res) => {
+  console.log("hitAllApi...")
+  return hitAllFunctions()
+  .then(function(returned){
+    //return {success : 'true', message : 'Hit all API functions'};
+    return(res.send({success : true}))
+  })
+  //https://us-central1-cannabis-taxi.cloudfunctions.net/getOrders
+  //https://us-central1-cannabis-taxi.cloudfunctions.net/submitOrder
+  //http://localhost:5001/cannabis-taxi/us-central1/getProfile
+  //http://localhost:5001/cannabis-taxi/us-central1/getShoppingCartItems
+  //http://localhost:5001/cannabis-taxi/us-central1/getOrders
+  //http://localhost:5001/cannabis-taxi/us-central1/submitOrder
+  //http://localhost:5001/cannabis-taxi/us-central1/updateLicense
+  //http://localhost:5001/cannabis-taxi/us-central1/updateCreditCard
+  //http://localhost:5001/cannabis-taxi/us-central1/updateDeliveryInformation
+})
+
+function hitAllFunctions(){
+  return new Promise(function (resolve, reject) {
+    var bodyForTests = {"data": {}}
+
+    var options = {
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      method: "POST",
+      json: true,
+      url: "https://us-central1-getleafed-68250.cloudfunctions.net/getDeals",
+      body: bodyForTests
+    }
+
+    return myRequest(options, function (error, response, body) {
+      return resolve({success : true})
+
+      /*
+      var options = {
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        method: "POST",
+        json: true,
+        url: "https://us-central1-cannabis-taxi.cloudfunctions.net/getProfile",
+        body: bodyForTests
+      }
+      return myRequest(options, function (error, response, body) {
+      })*/
+    })
+
+  })
+}
+
+
 exports.testSomething = functions.https.onRequest((req, res) => {
   console.log("TESTSOMETHING........")
   return createAirtableOrdersLinked();
@@ -105,6 +160,123 @@ function addUpdateUserFunction(data, uid){
     })
   })
 
+
+    function getDealsHelper(uid, data){
+      console.log("getDealsHelper uid:"+uid+" data:"+JSON.stringify(data))
+      return new Promise(function (resolve, reject) {
+        var refGet;
+        var deals=[]
+        var pagination = ""
+        var startAt = 0;
+        var counter = 0
+        var max = 50;
+        if (data !== null){
+          //console.log("TYPE:"+data.type+" sort_by:"+data.sort_by)
+          if (data.hasOwnProperty('startAt')){
+            startAt = data.startAt;
+          }
+          if((!data.hasOwnProperty('type')) && data.hasOwnProperty('sort_by')){
+            console.log("no type but YES sort")
+            if (data.sort_by === 'utcTime'){
+              refGet = db.collection('deals').orderBy('utc_time', 'desc');
+            }else   if (data.sort_by === 'views'){
+              refGet = db.collection('deals').orderBy('views', 'desc');
+            }else   if (data.sort_by === 'likes'){
+              refGet = db.collection('deals').orderBy('likes', 'desc');
+            }
+            return refGet.get()
+            .then(function(querySnapshot) {
+              querySnapshot.forEach(function(doc) {
+                deals.push(doc.data())
+              })
+              console.log("deals:"+JSON.stringify(deals))
+              return resolve(deals)
+            })
+          }else if(data.hasOwnProperty('type') && data.hasOwnProperty('sort_by')){
+            if (data.sort_by === 'utcTime'){
+              refGet = db.collection('deals').where('type', '==', data.type).orderBy('utc_time', 'desc').limit(50);
+            }else   if (data.sort_by === 'views'){
+              refGet = db.collection('deals').where('type', '==', data.type).orderBy('views', 'desc');
+            }else   if (data.sort_by === 'likes'){
+              refGet = db.collection('deals').where('type', '==', data.type).orderBy('likes', 'desc');
+            }
+            return refGet.get()
+            .then(function(querySnapshot) {
+              querySnapshot.forEach(function(doc) {
+                deals.push(doc.data())
+              })
+              console.log("deals:"+JSON.stringify(deals))
+              return resolve(deals)
+            })
+          }else if(data.hasOwnProperty('type')){
+            console.log("TYPE")
+            refGet = db.collection('deals').where('type', '==', data.type).orderBy('utc_time', 'desc');
+            return refGet.get()
+            .then(function(querySnapshot) {
+              querySnapshot.forEach(function(doc) {
+                deals.push(doc.data())
+              })
+              console.log("deals:"+JSON.stringify(deals))
+              return resolve(deals)
+            })
+          }else  if(data.hasOwnProperty('city')){
+            //    var refGet = db.collection('deals').where('uid', '==', uid).orderBy('utc_time', 'desc');
+            refGet = db.collection('deals').where('store_data.city', '==', data.city).orderBy('utc_time', 'desc');
+            return refGet.get()
+            .then(function(querySnapshot) {
+              querySnapshot.forEach(function(doc) {
+                deals.push(doc.data())
+              })
+              console.log("deals:"+JSON.stringify(deals))
+              return resolve(deals)
+            })
+          }else if(data.hasOwnProperty('store_name')){
+            refGet = db.collection('deals').where('store_data.store_name', '==', data.store_name).orderBy('utc_time', 'desc');
+            return refGet.get()
+            .then(function(querySnapshot) {
+              querySnapshot.forEach(function(doc) {
+                deals.push(doc.data())
+              })
+              console.log("deals:"+JSON.stringify(deals))
+              return resolve(deals)
+            })
+
+          }else if(data.hasOwnProperty('id')){
+            refGet = db.collection('deals').doc(data.id);
+            return refGet.get()
+            .then(doc => {
+              return(resolve(doc.data()));
+            })
+          }else{
+            console.log("HEREkkkkkk")
+            refGet = db.collection('deals').orderBy('utc_time', 'desc');
+            return refGet.get()
+            .then(function(querySnapshot) {
+              querySnapshot.forEach(function(doc) {
+                deals.push(doc.data())
+              })
+              console.log("deals:"+JSON.stringify(deals))
+              return resolve(deals)
+            })
+          }
+        }else{
+          console.log("HEREE>...")
+          refGet = db.collection('deals').orderBy('utc_time', 'desc');
+          return refGet.get()
+          .then(function(querySnapshot) {
+            querySnapshot.forEach(function(doc) {
+              deals.push(doc.data())
+            })
+            console.log("deals:"+JSON.stringify(deals))
+            return resolve(deals)
+          })
+        }
+      }).catch(err => {
+        console.log('getDealsForHelper - ERROR', err);
+        return {success : false, error : err}
+      })
+    }
+
   exports.updateLikes = functions.https.onCall((data, context) => {
     console.log("updateLikes...")
     if (!context.auth) {
@@ -130,7 +302,6 @@ function addUpdateUserFunction(data, uid){
     })
   })
   //
-
   function updateViewsForDealHelper(data, uid){
     var ref;
     ref = db.collection('deals').doc(data.id);
@@ -146,7 +317,6 @@ function addUpdateUserFunction(data, uid){
         return {error: 'error updateViewsForDealHelper:' +  err.toString()};
       })
     }
-
   //updateLikes
   function updateLikesHelper(data, uid){
     var ref;
@@ -165,59 +335,6 @@ function addUpdateUserFunction(data, uid){
       })
     }
 
-
-  function getDealsHelper(uid, data){
-    console.log("getDealsHelper uid:"+uid)
-    return new Promise(function (resolve, reject) {
-      var refGet;
-      var deals=[]
-
-      if (data !== null){
-        if(data.hasOwnProperty('city')){
-          //    var refGet = db.collection('deals').where('uid', '==', uid).orderBy('utc_time', 'desc');
-          refGet = db.collection('deals').where('store_data.city', '==', data.city).orderBy('utc_time', 'desc');
-          return refGet.get()
-          .then(function(querySnapshot) {
-            querySnapshot.forEach(function(doc) {
-              deals.push(doc.data())
-            })
-            console.log("deals:"+JSON.stringify(deals))
-            return resolve(deals)
-          })
-        }else if(data.hasOwnProperty('store_name')){
-          refGet = db.collection('deals').where('store_data.store_name', '==', data.store_name).orderBy('utc_time', 'desc');
-          return refGet.get()
-          .then(function(querySnapshot) {
-            querySnapshot.forEach(function(doc) {
-              deals.push(doc.data())
-            })
-            console.log("deals:"+JSON.stringify(deals))
-            return resolve(deals)
-          })
-
-        }else if(data.hasOwnProperty('id')){
-          refGet = db.collection('deals').doc(data.id);
-          return refGet.get()
-          .then(doc => {
-            return(resolve(doc.data()));
-          })
-        }
-      }else{
-        refGet = db.collection('deals').orderBy('utc_time', 'desc');
-        return refGet.get()
-        .then(function(querySnapshot) {
-          querySnapshot.forEach(function(doc) {
-            deals.push(doc.data())
-          })
-          console.log("deals:"+JSON.stringify(deals))
-          return resolve(deals)
-        })
-      }
-    }).catch(err => {
-      console.log('getDealsForHelper - ERROR', err);
-      return {success : false, error : err}
-    })
-  }
 
   function getDealsForStoreHelper(uid){
     console.log("getDealsForStoreHelper uid:"+uid)

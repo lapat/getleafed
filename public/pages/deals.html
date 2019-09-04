@@ -38,12 +38,13 @@
 
   <div class="row">
     <div class="col-sm">
-      <div id="filters" class="button-group">  <button class="button is-checked" data-filter="*">Show All</button>
-        <button class="button leafButton" data-filter=".leaf">Leaf</button>
-        <button class="button vapeButton" data-filter=".vape">Vape</button>
-        <button class="button ediblesButton" data-filter=".edibles">Edibles</button>
-        <button class="button ediblesButton" data-filter=".cbd">CBD</button>
-        <button class="button ediblesButton" data-filter=".kratom">Kratom</button>
+      <div id="filters" class="button-group">
+        <button class="button filtersButton is-checked" data-filter="*">Show All</button>
+        <button class="button leafButton filtersButton" data-filter=".leaf">Leaf</button>
+        <button class="button vapeButton filtersButton" data-filter=".vape">Vape</button>
+        <button class="button ediblesButton filtersButton" data-filter=".edibles">Edibles</button>
+        <button class="button cbdButton filtersButton" data-filter=".CBD">CBD</button>
+        <button class="button kratomButton filtersButton" data-filter=".kratom">Kratom</button>
         <!--
 
 
@@ -57,15 +58,16 @@
       </div>
       <div class="col-sm">
         <div id="sorts" class="button-group">
-          <button class="button is-checked" data-sort-by="utcTime">Newest</button>
-          <button class="button" data-sort-by="views">Views</button>
-          <button class="button" data-sort-by="distanceaway">Closest</button>
-          <button class="button" data-sort-by="likes">Hot Deals</button>
+          <button class="button is-checked sortButton" data-sort-by="utcTime">Newest</button>
+          <button class="button sortButton" data-sort-by="views">Views</button>
+          <!--<button class="button sortButton" data-sort-by="distanceaway">Closest</button>-->
+          <button class="button sortButton" data-sort-by="likes">Hot Deals</button>
 
         </div>
       </div>
     </div>
 
+    <div class="row">
 
     <div class="grid" >
 
@@ -76,10 +78,12 @@
 
         <img src={{aDeal.image_name}} class="img-fluid" style="max-height:150px;">
         <span style="font-weight:bold;font-size:100%;" class="theDealName">
-          {{aDeal.deal_name}}
+          {{convertToShortStringIfLong(aDeal.deal_name)}}
         </span>
         <p style="font-size: 70%;color:grey;">
-          {{aDeal.store_data.store_name}}
+          <a class="storeName"  ng-click="clickedOnStoreName(aDeal, $event)" href="#">
+            {{convertToShortStringIfLong(aDeal.store_data.store_name)}}
+          </a>
         </p>
         <p style="font-size: 14px;">
           {{handleDescription(aDeal.deal_description)}}
@@ -231,8 +235,10 @@
       </div>
       -->
     </div>
+  </div>
 
     <div class="text-center">
       <a href="" style="font-size:32px;"> Show More</a>
     </div>
+
   </div>

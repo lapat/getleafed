@@ -9,6 +9,12 @@ if (!firebase.apps.length) {
 }else{
   console.log("ALREADY INIT")
 }
+
+var lastSortByValue=null;
+var lastFilterPressed=null;
+var lastFilterPressedDataFilter="*";
+var lastSortByValueDataFilter="utcTime";
+
 var $grid;
 var filterFns;
 var firebase_user_object;
@@ -189,13 +195,9 @@ function addUpdateDealFunctionHelper($scope, dealToUpdate){
       })
       return;
     }
-    var uploadTask = imageRef.put(photo)
-    .then(snapshot => snapshot.ref.getDownloadURL())
-    .then((url) => {
-      //.then(function(snapshot) {
-      console.log('url:'+url);
-      addUpdateDealFunction(url, $scope, dealToUpdate)
-    });
+    console.log("handleImageUpload")
+    handleImageUpload(photo, imageRef, $scope, dealToUpdate)
+
   }else{
     console.log("photo is null")
     addUpdateDealFunction('', $scope, dealToUpdate)
@@ -266,6 +268,32 @@ getLeafed.controller('storeDealsController', function($scope, $location) {
   navBarStore();
   showBody();
   checkForStores($scope)
+
+
+  $scope.convertToShortStringIfLong = function(str){
+    if (str.length > 20){
+      return str.substring(0,20)+"..."
+    }
+    return str;
+  }
+
+  $scope.clickedPreviewStoreDeals = function(aDeal, e){
+    console.log("aDeal.id:"+aDeal.id)
+    //return;
+    if (e!==undefined){
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    //console.log("HJEREsn:"+aDeal.store_data.store_name)
+    window.location.href="/#/deal?d="+aDeal.id
+
+    //return ("/#/?s="+aDeal.store_data.store_name)
+  }
+
+  $( ".storeName" ).click(function(event) {
+    event.stopPropagation
+    //addUpdateDealFunctionHelper($scope, null)
+  })
 
   $scope.handleActive = function(is_active){
     console.log("handleActive")
@@ -534,190 +562,122 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
 
   console.log("CALLING LOAD GEOCODE...")
 
+  $scope.convertToSearch = function(storeName, e){
+    if (e!==undefined){
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    setTimeout(
+      function() {
+        $('#addStoreModal').modal('hide');
+      }, 1000);
 
-  $scope.clickedOnStoreRow = function(aStore){
-    storeToUpdate = aStore;
-    $('.deleteDealButton').show();
-    $(document).ready(function(){
-      $('.modal-title-store').text("Update Store")
-      $('#first_name').val(aStore.first_name);
-      $('#last_name').val(aStore.last_name);
-      $('#email').val(aStore.email);
-      $('#phone').val(aStore.phone);
-      $('#store_name').val(aStore.store_name);
-      $('#street_address').val(aStore.street_address);
-      $('#suite').val(aStore.suite);
-      $('#zip').val(aStore.zip);
-      $('#city').val(aStore.city);
-      $('#state').val(aStore.state);
+
+      return ("/#/?s="+storeName)
+    }
+
+    $scope.clickedOnStoreRow = function(aStore){
+      storeToUpdate = aStore;
+      $('.deleteDealButton').show();
+      $(document).ready(function(){
+        $('.modal-title-store').text("Update Store")
+        $('#first_name').val(aStore.first_name);
+        $('#last_name').val(aStore.last_name);
+        $('#email').val(aStore.email);
+        $('#phone').val(aStore.phone);
+        $('#store_name').val(aStore.store_name);
+        $('#street_address').val(aStore.street_address);
+        $('#suite').val(aStore.suite);
+        $('#zip').val(aStore.zip);
+        $('#city').val(aStore.city);
+        $('#state').val(aStore.state);
+        $('#addStoreModal').modal('show');
+      })
+    }
+
+    $(".addStore").on('click', function(e) {
+      clearAddStoreInputs();
+      $('.deleteStoreButton').hide();
+      $('.modal-title-store').text("Add Store")
       $('#addStoreModal').modal('show');
     })
-  }
 
-  $(".addStore").on('click', function(e) {
-    clearAddStoreInputs();
-    $('.deleteStoreButton').hide();
-    $('.modal-title-store').text("Add Store")
-    $('#addStoreModal').modal('show');
+    $(".saveStore").on('click', function(e) {
+
+      addUpdateStoreFunction($scope, storeToUpdate)
+    })
+
+    $( ".deleteStoreButton" ).click(function() {
+      console.log("deleteStoreButton")
+      deleteStoreHelper($scope, storeToUpdate)
+    })
+
   })
 
-  $(".saveStore").on('click', function(e) {
-
-    addUpdateStoreFunction($scope, storeToUpdate)
-  })
-
-  $( ".deleteStoreButton" ).click(function() {
-    console.log("deleteStoreButton")
-    deleteStoreHelper($scope, storeToUpdate)
-  })
-
-})
-
-function checkLocalDeals(dealId){
-  var index;
-  for (index in allDealsRetrieved){
-    if (allDealsRetrieved[index].id === dealId){
-      return allDealsRetrieved[index]
-    }
-  }
-  return null;
-}
-function addUpdateStoreFunction($scope, storeToUpdate){
-  console.log("addUpdateStoreFunction")
-  blockIt();
-  var data = checkStoreData();
-  if (data === false){
-    $.unblockUI();
-    return;
-  }
-  console.log("sending up this data:"+JSON.stringify(data))
-  //return;
-  //return;
-  $('#modal').modal('hide');
-  if (storeToUpdate !==null){
-    console.log("Store TO UPDATE ID:"+storeToUpdate.id)
-    data['id'] = storeToUpdate.id;
-  }
-  $('#addStoreModal').modal('hide')
-  //  loadGeocoderAndConvertToGps("1103 Mulford Street, Evanston, Illinois, 60202", "Evanston")
-
-  geocoder = new google.maps.Geocoder();
-
-
-  geocoder.geocode( { 'address': data.store_address}, function(results, status) {
-    if (status == 'OK') {
-      console.log("GOT IT:"+results[0].geometry.location)
-      console.log("lat:"+results[0].geometry.location.lat())
-
-      //data[location]=results[0].geometry.location;
-      data['gps_lat'] = results[0].geometry.location.lat();
-      data['gps_lng'] = results[0].geometry.location.lng();
-
-      //data['location']= new firebase.firestore.GeoPoint(results[0].geometry.location.lat(), results[0].geometry.location.lng())
-      addUpdateStoreHelper(data, $scope)
-    } else {
-      console.log("could not get GPS")
-      addUpdateStoreHelper(data, $scope)
-    }
-  });
-
-}
-
-function addUpdateStoreHelper(data, $scope){
-  addUpdateStore(data)
-  .then( function(result) {
-    console.log('addUpdateStore', result);
-    $scope.$apply(function () {
-      //$.unblockUI();
-      if (storeToUpdate !==null){
-        bootbox.alert("Your store was updated successfully.")
-      }else{
-        bootbox.alert("Your store was added successfully.")
-
+  function checkLocalDeals(dealId){
+    var index;
+    for (index in allDealsRetrieved){
+      if (allDealsRetrieved[index].id === dealId){
+        return allDealsRetrieved[index]
       }
-      clearAddStoreInputs();
-      getStoresHelper($scope)
-    })
-  }).catch(function(error) {
-    $.unblockUI();
-    bootbox.alert("There was an error, please contact support: "+error)
-  });
-}
-
-getLeafed.controller('subscribeController', function($scope, $location) {
-  console.log("subscribeController")
-  navBarUser();
-  showBody();
-})
-
-function updateViewForDealFunction(aDeal, $scope){
-
-  if (aDeal.hasOwnProperty('views')){
-    console.log("has views aDeal.views:"+aDeal.views)
-    aDeal['views'] = Number(aDeal.views) + 1;
-  }else{
-    console.log("no views")
-
-    aDeal['views'] = 1;
-  }
-
-  console.log("aDeal:"+JSON.stringify(aDeal))
-  updateViewsForDeal(aDeal)
-  .then( function(result) {
-    console.log('pdateViewForDealFunction storeName', result);
-    $scope.$apply(function () {
-      aDeal['views'] = result.data.views
-
-    })
-  }).catch(function(error) {
-    //bootbox.alert("There was an error, please contact support: "+error)
-  });
-}
-
-getLeafed.controller('aSingleDealController', function($scope, $location) {
-  console.log("aSingleDealController")
-  navBarUser();
-  $('#restOfBody').hide();
-  //codeGoogleMapAddress(cannabis_taxi_user_local.street_address + ", " + cannabis_taxi_user_local.city + ", "+ cannabis_taxi_user_local.state + " " + cannabis_taxi_user_local.zip)
-  var dealId=getParameter("d");
-  if(dealId===null || dealId===undefined || dealId===""){
-    bootbox.alert("Error, no deal id was specified.");
-    return;
-  }
-
-  $scope.handleHeartClass = function(aDeal){
-    console.log("handleHeartClass")
-      return handleHeartClassFunction(aDeal)
-  }
-
-  $scope.clickedOnHeart = function(aDeal, e){
-    clickedOnHeartFunction(aDeal, $scope, e)
-  }
-
-
-  var localDeal = checkLocalDeals(dealId);
-  if (localDeal!==null){
-    $scope.deal_picked = localDeal;
-    if ($scope.deal_picked.store_data.store_address!==undefined && $scope.deal_picked.store_data.store_address!==null && $scope.deal_picked.store_data.store_address!==""){
-      codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
     }
-    showBody();
-    $('#restOfBody').show();
-
-    getSideBarDealPage($scope, $scope.deal_picked);
-  }else{
+    return null;
+  }
+  function addUpdateStoreFunction($scope, storeToUpdate){
+    console.log("addUpdateStoreFunction")
     blockIt();
-    getDeals({id:dealId})
+    var data = checkStoreData();
+    if (data === false){
+      $.unblockUI();
+      return;
+    }
+    console.log("sending up this data:"+JSON.stringify(data))
+    //return;
+    //return;
+    $('#modal').modal('hide');
+    if (storeToUpdate !==null){
+      console.log("Store TO UPDATE ID:"+storeToUpdate.id)
+      data['id'] = storeToUpdate.id;
+    }
+    $('#addStoreModal').modal('hide')
+    //  loadGeocoderAndConvertToGps("1103 Mulford Street, Evanston, Illinois, 60202", "Evanston")
+
+    geocoder = new google.maps.Geocoder();
+
+
+    geocoder.geocode( { 'address': data.store_address}, function(results, status) {
+      if (status == 'OK') {
+        console.log("GOT IT:"+results[0].geometry.location)
+        console.log("lat:"+results[0].geometry.location.lat())
+
+        //data[location]=results[0].geometry.location;
+        data['gps_lat'] = results[0].geometry.location.lat();
+        data['gps_lng'] = results[0].geometry.location.lng();
+
+        //data['location']= new firebase.firestore.GeoPoint(results[0].geometry.location.lat(), results[0].geometry.location.lng())
+        addUpdateStoreHelper(data, $scope)
+      } else {
+        console.log("could not get GPS")
+        addUpdateStoreHelper(data, $scope)
+      }
+    });
+
+  }
+
+  function addUpdateStoreHelper(data, $scope){
+    addUpdateStore(data)
     .then( function(result) {
-      console.log('getDeals', result);
+      console.log('addUpdateStore', result);
       $scope.$apply(function () {
-        $.unblockUI();
-        $scope.deal_picked = result.data;
-        updateViewForDealFunction($scope.deal_picked, $scope);
-        codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
-        showBody();
-        $('#restOfBody').show();
-        getSideBarDealPage($scope, $scope.deal_picked);
+        //$.unblockUI();
+        if (storeToUpdate !==null){
+          bootbox.alert("Your store was updated successfully.")
+        }else{
+          bootbox.alert("Your store was added successfully.")
+
+        }
+        clearAddStoreInputs();
+        getStoresHelper($scope)
       })
     }).catch(function(error) {
       $.unblockUI();
@@ -725,95 +685,302 @@ getLeafed.controller('aSingleDealController', function($scope, $location) {
     });
   }
 
+  getLeafed.controller('subscribeController', function($scope, $location) {
+    console.log("subscribeController")
+    navBarUser();
+    showBody();
+  })
 
-  $scope.clickedOnDealAtSameStore = function(aDeal){
-    console.log('clickedOnDealOnDealPage aDeal:'+JSON.stringify(aDeal))
-    window.location.href="/#/deal?d="+aDeal.id
+  function updateViewForDealFunction(aDeal, $scope){
+
+    if (aDeal.hasOwnProperty('views')){
+      console.log("has views aDeal.views:"+aDeal.views)
+      aDeal['views'] = Number(aDeal.views) + 1;
+    }else{
+      console.log("no views")
+
+      aDeal['views'] = 1;
+    }
+
+    console.log("aDeal:"+JSON.stringify(aDeal))
+    updateViewsForDeal(aDeal)
+    .then( function(result) {
+      console.log('pdateViewForDealFunction storeName', result);
+      $scope.$apply(function () {
+        aDeal['views'] = result.data.views
+
+      })
+    }).catch(function(error) {
+      //bootbox.alert("There was an error, please contact support: "+error)
+    });
   }
 
-  $(".printMe").click(function() {
-    console.log("PRINT ME")
+  getLeafed.controller('aSingleDealController', function($scope, $location) {
+    console.log("aSingleDealController")
+    navBarUser();
+    $('#restOfBody').hide();
+    //codeGoogleMapAddress(cannabis_taxi_user_local.street_address + ", " + cannabis_taxi_user_local.city + ", "+ cannabis_taxi_user_local.state + " " + cannabis_taxi_user_local.zip)
+    var dealId=getParameter("d");
+    if(dealId===null || dealId===undefined || dealId===""){
+      bootbox.alert("Error, no deal id was specified.");
+      return;
+    }
 
-    window.print();
+    $scope.handleHeartClass = function(aDeal){
+      console.log("handleHeartClass")
+      return handleHeartClassFunction(aDeal)
+    }
+
+    $scope.clickedOnHeart = function(aDeal, e){
+
+      clickedOnHeartFunction(aDeal, $scope, e)
+    }
+
+
+    var localDeal = checkLocalDeals(dealId);
+    if (localDeal!==null){
+      $scope.deal_picked = localDeal;
+      if ($scope.deal_picked.store_data.store_address!==undefined && $scope.deal_picked.store_data.store_address!==null && $scope.deal_picked.store_data.store_address!==""){
+        codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+      }
+      showBody();
+      $('#restOfBody').show();
+
+      getSideBarDealPage($scope, $scope.deal_picked);
+    }else{
+      blockIt();
+      getDeals({id:dealId})
+      .then( function(result) {
+        console.log('getDeals', result);
+        $scope.$apply(function () {
+          $.unblockUI();
+          $scope.deal_picked = result.data;
+          updateViewForDealFunction($scope.deal_picked, $scope);
+          codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+          showBody();
+          $('#restOfBody').show();
+          getSideBarDealPage($scope, $scope.deal_picked);
+        })
+      }).catch(function(error) {
+        $.unblockUI();
+        bootbox.alert("There was an error, please contact support: "+error)
+      });
+    }
+
+
+    $scope.clickedOnDealAtSameStore = function(aDeal){
+      console.log('clickedOnDealOnDealPage aDeal:'+JSON.stringify(aDeal))
+      window.location.href="/#/deal?d="+aDeal.id
+    }
+
+    $(".printMe").click(function() {
+      console.log("PRINT ME")
+
+      window.print();
+
+    })
+
+    $scope.handleCurrency = function(currency){
+      return handleCurrencyFun(currency);
+    }
+
+    $scope.handleLikesViews=function(viewsLikes){
+      if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
+        return Number(0)
+      }else{
+        return Number(viewsLikes)
+      }
+    }
 
   })
 
-  $scope.handleCurrency = function(currency){
-    return handleCurrencyFun(currency);
+
+
+  function getSideBarDealPage($scope, deal_picked){
+    console.log("getSideBarDealPage deal_picked:"+JSON.stringify(deal_picked))
+    getDeals({'store_name':deal_picked.store_data.store_name})
+    .then( function(result) {
+      console.log('getDeals storeName', result);
+      $scope.$apply(function () {
+        $scope.dealsAtSameStore = result.data
+        //$.unblockUI();
+        //$scope.deal_picked = result.data;
+        //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+        //showBody();
+      })
+    }).catch(function(error) {
+      //bootbox.alert("There was an error, please contact support: "+error)
+    });
+    getDeals({'city':deal_picked.store_data.city})
+    .then( function(result) {
+      console.log('getDeals city', result);
+      $scope.$apply(function () {
+        $scope.dealsAtSameCity = result.data
+
+        //$scope.dealsAtSameStore = result.data
+        //$.unblockUI();
+        //$scope.deal_picked = result.data;
+        //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+        //showBody();
+      })
+    }).catch(function(error) {
+      //bootbox.alert("There was an error, please contact support: "+error)
+    });
   }
 
-  $scope.handleLikesViews=function(viewsLikes){
-    if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
-      return Number(0)
-    }else{
-      return Number(viewsLikes)
-    }
-  }
+  getLeafed.controller('dealsController', function($scope, $location, $route) {
+    console.log("dealsController")
+    navBarUser();
+    $('#restOfBody').hide();
+    //showBody();
+    //$('#restOfBody').show();
 
-})
+    //$('.leafButton').addClass("is-checked")
+    //$('.leafButton').addClass("active")
+    //return;
 
 
+    $("#locationInputDeals").on("keyup", function(){
+      // do stuff;
+      console.log("key up on location")
+      //filterValue = filterFns[ filterValue ] || filterValue;
+      console.log("loc:"+$(".locationValue").val())
+      var filterValue = cleanString($(".locationValue").val())
+      if (filterValue !== ''){
+        filterValue = "." + filterValue
+      }
 
-function getSideBarDealPage($scope, deal_picked){
-  console.log("getSideBarDealPage deal_picked:"+JSON.stringify(deal_picked))
-  getDeals({'store_name':deal_picked.store_data.store_name})
-  .then( function(result) {
-    console.log('getDeals storeName', result);
-    $scope.$apply(function () {
-      $scope.dealsAtSameStore = result.data
-      //$.unblockUI();
-      //$scope.deal_picked = result.data;
-      //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
-      //showBody();
+      //filterValue = addButtonFilter(filterValue)
+
+      //console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+      //filterValue = filterFns[ filterValue ] || filterValue;
+      //console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+      $grid.isotope({ filter: filterValue });
+    });
+
+    $("#otherSearch").on("keyup", function(){
+      // do stuff;
+      console.log("key up on otherSearchValue")
+      //filterValue = filterFns[ filterValue ] || filterValue;
+      console.log("otherSearchValue:"+$(".otherSearchValue").val())
+      var filterValue = cleanString($(".otherSearchValue").val())
+      if (filterValue !== ''){
+        filterValue = "." + filterValue
+      }
+
+      filterValue = addButtonFilter(filterValue)
+
+
+      console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+      //filterValue = filterFns[ filterValue ] || filterValue;
+      console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+      $grid.isotope({ filter: filterValue });
+    });
+
+    $( ".filtersButton" ).click(function() {
+      console.log("FILTER BUTTON")
+      var fil = $( this ).attr('data-filter')
+      lastFilterPressedDataFilter=$( this ).attr('data-filter')
+
+      console.log("lastFilterPressed:"+fil);
+      if (fil === "*"){
+
+        lastFilterPressed=null;
+        if (lastSortByValue!==null){
+          dataUp = {sort_by : lastSortByValue}
+        }else{
+          dataUp = {}
+        }
+        console.log("calling getDealsFun - dataUp:"+JSON.stringify(dataUp))
+        getDealsFunction($scope, searchParameter, dataUp, $route, fil)
+        return;
+      }
+      var filterToSortBy=fil.replace(".","")
+      var filterToSendUp = filterToSortBy.charAt(0).toUpperCase() + filterToSortBy.substring(1);
+      console.log("fToSendUp:"+filterToSendUp)
+      lastFilterPressed = filterToSendUp;
+      var dataUp;
+      if (lastSortByValue!==null){
+        dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+      }else{
+        dataUp = {type : lastFilterPressed}
+      }
+      getDealsFunction($scope, searchParameter, dataUp, $route, fil)
+      return;
     })
-  }).catch(function(error) {
-    //bootbox.alert("There was an error, please contact support: "+error)
-  });
-  getDeals({'city':deal_picked.store_data.city})
-  .then( function(result) {
-    console.log('getDeals city', result);
-    $scope.$apply(function () {
-      $scope.dealsAtSameCity = result.data
 
-      //$scope.dealsAtSameStore = result.data
-      //$.unblockUI();
-      //$scope.deal_picked = result.data;
-      //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
-      //showBody();
+    $( ".sortButton" ).click(function() {
+      console.log("SORT BUTTON")
+      var sort = $( this ).attr('data-sort-by')
+      lastSortByValueDataFilter=$( this ).attr('data-sort-by');
+      console.log("sort pressed:"+sort);
+      if (sort === "*"){
+
+        lastSortByValue=null;
+        if (lastFilterPressed!==null){
+          dataUp = {type : lastFilterPressed}
+        }else{
+          dataUp = {}
+        }
+        console.log("calling getDealsFun - dataUp:"+JSON.stringify(dataUp))
+        getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
+        return;
+      }
+      var sortBy=sort.replace(".","")
+      var sortToSendUp = sortBy;//sortBy.charAt(0).toUpperCase() + sortBy.substring(1);
+      console.log("sortToSendUp:"+sortToSendUp)
+      lastSortByValue = sortToSendUp;
+      var dataUp;
+      if (lastFilterPressed!==null){
+        dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+      }else{
+        dataUp = {sort_by : lastSortByValue}
+      }
+      getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
+      return;
     })
-  }).catch(function(error) {
-    //bootbox.alert("There was an error, please contact support: "+error)
-  });
-}
 
-getLeafed.controller('dealsController', function($scope, $location) {
-  console.log("dealsController")
-  navBarUser();
-  $('#restOfBody').hide();
-
-
-  var searchParameter = getParameter("s")
-  //To Do - search by search parameter if it's a cache load
-  showBody();
-  if (allDealsRetrieved!==null){
-    $.unblockUI();
-    $scope.deals=allDealsRetrieved;
-    $('#restOfBody').show();
-    jQuery( function() {
-      loadOtherFunctionsForDeals()
-    })
-  }else{
-    getDealsFunction($scope, searchParameter)
-  }
-
-  $scope.handleHeartClass = function(aDeal){
-      //$scope.$apply(function () {
-        return handleHeartClassFunction(aDeal)
+    var searchParameter = getParameter("s")
+    //To Do - search by search parameter if it's a cache load
+    showBody();
+    if (allDealsRetrieved!==null){
+      $.unblockUI();
+      $scope.deals=allDealsRetrieved;
+      $('#restOfBody').show();
+      //jQuery( function() {
+      //  loadOtherFunctionsForDeals()
       //})
-  }
+    }else{
+      getDealsFunction($scope, searchParameter, null, $route, null)
+    }
 
+    $scope.convertToShortStringIfLong = function(str){
+      if (str===undefined){
+        return ""
+      }
+      if (str.length > 35){
+        return str.substring(0,35)+"..."
+      }
+      return str;
+    }
 
-  $scope.handleDescription = function(description){
+    $scope.handleHeartClass = function(aDeal){
+      //$scope.$apply(function () {
+      return handleHeartClassFunction(aDeal)
+      //})
+    }
+
+    $scope.clickedOnStoreName  = function(aDeal, e){
+      if (e!==undefined){
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      //console.log("HJEREsn:"+aDeal.store_data.store_name)
+      window.location.href="/#/?s="+aDeal.store_data.store_name
+      //return ("/#/?s="+aDeal.store_data.store_name)
+    }
+
+    $scope.handleDescription = function(description){
       if (description === undefined){
         return ""
       }
@@ -821,224 +988,263 @@ getLeafed.controller('dealsController', function($scope, $location) {
         return description.substring(0,90)+"..."
       }
       return description;
-  }
-
-  $scope.clickedOnHeart = function(aDeal, e){
-    clickedOnHeartFunction(aDeal, $scope, e)
-  }
-
-  $scope.clickedOnDealOnDealsPage = function(aDeal){
-    console.log('clickedOnDealOnDealsPage aDeal:'+JSON.stringify(aDeal))
-    window.location.href="/#/deal?d="+aDeal.id
-  }
-
-  $scope.cleanString = function(str){
-    return cleanString(str)
-
-  }
-
-  $scope.handleDistanceAway=function(d){
-    if (d===undefined || d === "" || d ==null){
-      return Number(0)
-    }else{
-      return Number(d)
     }
-  }
 
-  $scope.handleLikesViews=function(viewsLikes){
-    if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
-      return Number(0)
-    }else{
-      return Number(viewsLikes)
+    $scope.clickedOnHeart = function(aDeal, e){
+      clickedOnHeartFunction(aDeal, $scope, e)
     }
-  }
 
-  $scope.handleCurrency=function(amount){
-    return handleCurrencyFun(amount)
+    $scope.clickedOnDealOnDealsPage = function(aDeal){
+      console.log('clickedOnDealOnDealsPage aDeal:'+JSON.stringify(aDeal))
+      window.location.href="/#/deal?d="+aDeal.id
+    }
 
-  }
-  // bind filter button click
+    $scope.cleanString = function(str){
+      return cleanString(str)
 
+    }
 
-  //$(".heart.fa").click(function() {
-  //  $(this).toggleClass("fa-heart fa-heart-o");
-  //  console.log("CLICKED")
-  //});
-
-})
-
-function clickedOnHeartFunction(aDeal, $scope, e){
-console.log("heart")
-e.stopPropagation();
-e.preventDefault();
-if (firebase_user_object!==undefined && firebase_user_object !== null){
-  console.log("GOOD")
-  handleLikeFunction(aDeal, $scope, e)
-}else{
-  bootbox.alert("You have to be signed in to do that.", function(){
-    window.location.href = "/signin_user.html"
-  });
-}
-}
-
-function handleHeartClassFunction(aDeal){
-  //console.log("handle heart class function")
-  if(firebase_user_object===null || firebase_user_object===undefined){
-    return "fa-heart-o"
-  }
-  var index;
-  if (thisUserLikesThisDeal(aDeal)){
-    return "fa-heart"
-  }else{
-    return "fa-heart-o"
-  }
-}
-
-function handleCurrencyFun(amount){
-  if (amount===undefined || amount === "" || amount ==null){
-    return ""
-  }
-  return "$"+formatMoney(amount)
-}
-
-function addButtonFilter(filterValue){
-  if ($('.leafButton').hasClass('is-checked')){
-    filterValue = filterValue + ".leaf"
-  }else if ($('.vapeButton').hasClass('is-checked')){
-    console.log("YES YES")
-    filterValue = filterValue + ".vape"
-  }else if ($('.ediblesButton').hasClass('is-checked')){
-    filterValue = filterValue + ".edibles"
-  }
-  return filterValue
-
-}
-
-function loadOtherFunctionsForDeals($scope){
-
-  $grid = $('.grid').isotope({
-    itemSelector: '.element-item',
-    layoutMode: 'fitRows',
-    getSortData: {
-      utcTime : '.utcTime parseInt',
-      views: '.views parseInt',
-      likes: '.likes parseInt',
-      distanceaway: '.distanceaway parseInt',
-      number: '.number parseInt',
-      category: '[data-category]',
-      weight: function( itemElem ) {
-        var weight = $( itemElem ).find('.weight').text();
-        return parseFloat( weight.replace( /[\(\)]/g, '') );
+    $scope.handleDistanceAway=function(d){
+      if (d===undefined || d === "" || d ==null){
+        return Number(0)
+      }else{
+        return Number(d)
       }
     }
-  });
 
-  // filter functions
-  filterFns = {
-    // show if number is greater than 50
-    numberGreaterThan50: function() {
-      var number = $(this).find('.number').text();
-      return parseInt( number, 10 ) > 50;
-    },
-    // show if name ends with -ium
-    ium: function() {
-      var name = $(this).find('.name').text();
-      return name.match( /ium$/ );
-    }
-  };
-
-  //BUTTONS
-  $('#filters').on( 'click', 'button', function() {
-    console.log("filters")
-    var filterValue = $( this ).attr('data-filter');
-    console.log("filterValue:"+filterValue+" "+JSON.stringify(filterValue))
-
-    if ($(".locationValue").val()!==''){
-      filterValue = filterValue + "." + cleanString($(".locationValue").val())
+    $scope.handleLikesViews=function(viewsLikes){
+      if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
+        return Number(0)
+      }else{
+        return Number(viewsLikes)
+      }
     }
 
-    // use filterFn if matches value
-    filterValue = filterFns[ filterValue ] || filterValue;
-    console.log("filter value now:"+filterValue)
-    $grid.isotope({ filter: filterValue });
-    //iso.layout();
-    //$grid.isotope('layout')
-  });
+    $scope.handleCurrency=function(amount){
+      return handleCurrencyFun(amount)
 
-  //LOCATION INPUT
-  $("#locationInputDeals").on("keyup", function(){
-    // do stuff;
-    console.log("key up on location")
-    //filterValue = filterFns[ filterValue ] || filterValue;
-    console.log("loc:"+$(".locationValue").val())
-    var filterValue = cleanString($(".locationValue").val())
-    if (filterValue !== ''){
-      filterValue = "." + filterValue
     }
 
-    //filterValue = addButtonFilter(filterValue)
+  })
 
-    //console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
-    filterValue = filterFns[ filterValue ] || filterValue;
-    //console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
-    $grid.isotope({ filter: filterValue });
-  });
-
-  //SEARCH INPUT
-  $("#otherSearch").on("keyup", function(){
-    // do stuff;
-    console.log("key up on otherSearchValue")
-    //filterValue = filterFns[ filterValue ] || filterValue;
-    console.log("otherSearchValue:"+$(".otherSearchValue").val())
-    var filterValue = cleanString($(".otherSearchValue").val())
-    if (filterValue !== ''){
-      filterValue = "." + filterValue
-    }
-
-    filterValue = addButtonFilter(filterValue)
-
-
-    console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
-    filterValue = filterFns[ filterValue ] || filterValue;
-    console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
-    $grid.isotope({ filter: filterValue });
-  });
-
-  // bind sort button click
-  $('#sorts').on( 'click', 'button', function() {
-    var sortByValue = $(this).attr('data-sort-by');
-    console.log("sortByValue:"+sortByValue)
-
-    if (sortByValue==="likes"){
-      $grid.isotope({
-        sortBy: sortByValue,
-        sortAscending: false
+  function clickedOnHeartFunction(aDeal, $scope, e){
+    console.log("heart")
+    e.stopPropagation();
+    e.preventDefault();
+    if (firebase_user_object!==undefined && firebase_user_object !== null){
+      console.log("GOOD")
+      handleLikeFunction(aDeal, $scope, e)
+    }else{
+      bootbox.alert("You have to be signed in to do that.", function(){
+        window.location.href = "/signin_user.html"
       });
-    }else if (sortByValue==="distanceaway"){
-      console.log("SORTING distanceAway")
-      var startPos;
-      var geoSuccess = function(position) {
-         console.log("SUCCESS")
-        console.log("lat:"+position.coords.latitude+ "lng:" +position.coords.longitude)
-          local_lat=position.coords.latitude;
-          local_lng=position.coords.longitude;
-          var index;
+    }
+  }
 
-          for (index in $scope.deals){
-            var distanceAway = distance(local_lat,
-                                                         local_lng,
-                                                         $scope.deals[index].store_data.gps_lat,
-                                                         $scope.deals[index].store_data.gps_lng,
-                                                         "M");
-            if (!isNaN(distanceAway)){
+  function handleHeartClassFunction(aDeal){
+    //console.log("handle heart class function")
+    if(firebase_user_object===null || firebase_user_object===undefined){
+      return "fa-heart-o"
+    }
+    var index;
+    if (thisUserLikesThisDeal(aDeal)){
+      return "fa-heart"
+    }else{
+      return "fa-heart-o"
+    }
+  }
+
+  function handleCurrencyFun(amount){
+    if (amount===undefined || amount === "" || amount ==null){
+      return ""
+    }
+    return "$"+formatMoney(amount)
+  }
+
+  function addButtonFilter(filterValue){
+    if ($('.leafButton').hasClass('is-checked')){
+      filterValue = filterValue + ".leaf"
+    }else if ($('.vapeButton').hasClass('is-checked')){
+      console.log("YES YES")
+      filterValue = filterValue + ".vape"
+    }else if ($('.ediblesButton').hasClass('is-checked')){
+      filterValue = filterValue + ".edibles"
+    }
+    return filterValue
+
+  }
+
+
+
+
+  function loadOtherFunctionsForDeals($scope){
+
+    /*if (searchParameter!==""){
+    console.log("searchParameter:"+searchParameter)
+    searchStrDecoded = decodeURI(searchParameter)
+    console.log("searchStrDecoded:"+searchStrDecoded)
+    var filterValue = cleanString(searchStrDecoded)
+    if (filterValue !== ''){
+    filterValue = "." + filterValue
+  }
+  filterValue = addButtonFilter(filterValue)
+  console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+  $grid.isotope({ filter: filterValue });
+}*/
+var searchParameter = getParameter("s")
+var filterValue = ""
+if (searchParameter!==""){
+  searchStrDecoded = decodeURI(searchParameter)
+  console.log("searchStrDecoded:"+searchStrDecoded)
+  var filterValue = cleanString(searchStrDecoded)
+  if (filterValue !== ''){
+    filterValue = "." + filterValue
+  }
+  filterValue = addButtonFilter(filterValue)
+  $('.otherSearchValue').val(searchStrDecoded);
+}
+
+$grid = $('.grid').isotope({
+  filter : filterValue,
+  itemSelector: '.element-item',
+  masonry:{
+    isFitWidth: true
+  },
+  getSortData: {
+    utcTime : '.utcTime parseInt',
+    views: '.views parseInt',
+    likes: '.likes parseInt',
+    distanceaway: '.distanceaway parseInt',
+    number: '.number parseInt',
+    category: '[data-category]',
+    weight: function( itemElem ) {
+      var weight = $( itemElem ).find('.weight').text();
+      return parseFloat( weight.replace( /[\(\)]/g, '') );
+    }
+  }
+});
+
+// filter functions
+filterFns = {
+  // show if number is greater than 50
+  numberGreaterThan50: function() {
+    var number = $(this).find('.number').text();
+    return parseInt( number, 10 ) > 50;
+  },
+  // show if name ends with -ium
+  ium: function() {
+    var name = $(this).find('.name').text();
+    return name.match( /ium$/ );
+  }
+};
+
+//BUTTONS
+
+/*  $('#filters').on( 'click', 'button', function() {
+console.log("filters")
+var fil = $( this ).attr('data-filter')
+console.log("lastFilterPressed:"+fil);
+var filterToSortBy=fil.replace(".","")
+var filterToSendUp = filterToSortBy.charAt(0).toUpperCase() + filterToSortBy.substring(1);
+console.log("fToSendUp:"+filterToSendUp)
+var lastFilterPressed = filterToSendUp;
+var dataUp;
+if (lastSortByValue!==null){
+dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+}else{
+dataUp = {type : lastFilterPressed}
+}
+getDealsFunction($scope, searchParameter, dataUp)
+return;
+
+var filterValue = $( this ).attr('data-filter');
+console.log("filterValue:"+filterValue+" "+JSON.stringify(filterValue))
+if ($(".locationValue").val()!==''){
+filterValue = filterValue + "." + cleanString($(".locationValue").val())
+}
+filterValue = filterFns[ filterValue ] || filterValue;
+console.log("filter value now:"+filterValue)
+$grid.isotope({ filter: filterValue });
+});
+*/
+
+//LOCATION INPUT
+/*
+$("#locationInputDeals").on("keyup", function(){
+  // do stuff;
+  console.log("key up on location")
+  //filterValue = filterFns[ filterValue ] || filterValue;
+  console.log("loc:"+$(".locationValue").val())
+  var filterValue = cleanString($(".locationValue").val())
+  if (filterValue !== ''){
+    filterValue = "." + filterValue
+  }
+
+  //filterValue = addButtonFilter(filterValue)
+
+  //console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+  filterValue = filterFns[ filterValue ] || filterValue;
+  //console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+  $grid.isotope({ filter: filterValue });
+});*/
+
+//SEARCH INPUT
+$("#otherSearch").on("keyup", function(){
+  // do stuff;
+  console.log("key up on otherSearchValue")
+  //filterValue = filterFns[ filterValue ] || filterValue;
+  console.log("otherSearchValue:"+$(".otherSearchValue").val())
+  var filterValue = cleanString($(".otherSearchValue").val())
+  if (filterValue !== ''){
+    filterValue = "." + filterValue
+  }
+
+  filterValue = addButtonFilter(filterValue)
+
+
+  console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+  filterValue = filterFns[ filterValue ] || filterValue;
+  console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+  $grid.isotope({ filter: filterValue });
+});
+
+// bind sort button click
+$('#sorts').on( 'click', 'button', function() {
+  var sortByValue = $(this).attr('data-sort-by');
+  lastSortByValue = $( this ).attr('data-sort-by')
+
+
+  //Old Sort Method - Local
+  console.log("sortByValue:"+sortByValue)
+  if (sortByValue==="likes"){
+    $grid.isotope({
+      sortBy: sortByValue,
+      sortAscending: false
+    });
+  }else if (sortByValue==="distanceaway"){
+    console.log("SORTING distanceAway")
+    var startPos;
+    var geoSuccess = function(position) {
+      console.log("SUCCESS")
+      console.log("lat:"+position.coords.latitude+ "lng:" +position.coords.longitude)
+      local_lat=position.coords.latitude;
+      local_lng=position.coords.longitude;
+      var index;
+
+      for (index in $scope.deals){
+        var distanceAway = distance(local_lat,
+          local_lng,
+          $scope.deals[index].store_data.gps_lat,
+          $scope.deals[index].store_data.gps_lng,
+          "M");
+          if (!isNaN(distanceAway)){
             console.log("DISTANCE AWAY:"+distanceAway)
             $scope.$apply(function () {
-
               $scope.deals[index].store_data.distance_away = distanceAway.toFixed(1)
             })
 
-            }
           }
+        }
 
       };
       //Uncomment me to add distance away....took it out
@@ -1064,7 +1270,6 @@ function loadOtherFunctionsForDeals($scope){
     }
   });
 
-
   // change is-checked class on buttons
   $('.button-group').each( function( i, buttonGroup ) {
     var $buttonGroup = $( buttonGroup );
@@ -1074,8 +1279,40 @@ function loadOtherFunctionsForDeals($scope){
     });
   });
 
-
 }
+
+
+
+
+//BUTTONS
+/*
+$('#filters').on( 'click', 'button', function() {
+console.log("filters")
+var fil = $( this ).attr('data-filter')
+console.log("lastFilterPressed:"+fil);
+var filterToSortBy=fil.replace(".","")
+var filterToSendUp = filterToSortBy.charAt(0).toUpperCase() + filterToSortBy.substring(1);
+console.log("fToSendUp:"+filterToSendUp)
+var lastFilterPressed = filterToSendUp;
+var dataUp;
+if (lastSortByValue!==null){
+dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+}else{
+dataUp = {type : lastFilterPressed}
+}
+getDealsFunction($scope, searchParameter, dataUp)
+return;
+var filterValue = $( this ).attr('data-filter');
+console.log("filterValue:"+filterValue+" "+JSON.stringify(filterValue))
+if ($(".locationValue").val()!==''){
+filterValue = filterValue + "." + cleanString($(".locationValue").val())
+}
+filterValue = filterFns[ filterValue ] || filterValue;
+console.log("filter value now:"+filterValue)
+$grid.isotope({ filter: filterValue });
+});
+*/
+
 
 function formatMoney(number, decPlaces, decSep, thouSep) {
   decPlaces = isNaN(decPlaces = Math.abs(decPlaces)) ? 2 : decPlaces,
@@ -1163,11 +1400,16 @@ function handleLikeFunction(aDeal, $scope, $event){
   });
 }
 
-
-
-function getDealsFunction($scope, searchParameter){
+function getDealsFunction($scope, searchParameter, dataUp, $route, buttonPressed){
+  console.log("ButtonPressed:"+JSON.stringify(buttonPressed))
   blockIt();
-  getDeals()
+  var data={}
+  if (data!==undefined){
+    data=dataUp;
+  }
+  console.log("calling getDeals data:"+JSON.stringify(data))
+  //$('.navBarFooter').hide();
+  getDeals(data)
   .then( function(result) {
     console.log('getDeals', result);
     $scope.$apply(function () {
@@ -1175,30 +1417,69 @@ function getDealsFunction($scope, searchParameter){
       $scope.deals=result.data;
       allDealsRetrieved = result.data;
       //updateHearts();
-      $('#restOfBody').show();
-      jQuery( function() {
-        loadOtherFunctionsForDeals($scope)
-        if (searchParameter!==""){
-          /*console.log("searchParameter:"+searchParameter)
-          var filterValue = cleanString(searchParameter)
-          if (filterValue !== ''){
-            filterValue = "." + filterValue
-          }
-          filterValue = addButtonFilter(filterValue)
 
-
-          console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
-          filterValue = filterFns[ filterValue ] || filterValue;
-          console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
-          $grid.isotope({ filter: filterValue });*/
+      var searchParameter = getParameter("s")
+      var filterValue = "*"
+      if (searchParameter!==""){
+        searchStrDecoded = decodeURI(searchParameter)
+        console.log("searchStrDecoded:"+searchStrDecoded)
+        var filterValue = cleanString(searchStrDecoded)
+        if (filterValue !== ''){
+          filterValue = "." + filterValue
         }
-      })
-    })
-  }).catch(function(error) {
-    $.unblockUI();
-    bootbox.alert("There was an error, please contact support: "+error)
-  });
+        filterValue = addButtonFilter(filterValue)
+        $( document ).ready(function() {
+          $('.otherSearchValue').val(searchStrDecoded);
+        })
+      }
 
+
+
+      jQuery( function() {
+        $grid = $('.grid').isotope({
+          filter:filterValue,
+          itemSelector: '.element-item',
+          masonry:{
+            isFitWidth: true
+          }
+          /*,
+          getSortData: {
+          utcTime : '.utcTime parseInt',
+          views: '.views parseInt',
+          likes: '.likes parseInt',
+          distanceaway: '.distanceaway parseInt',
+          number: '.number parseInt',
+          category: '[data-category]',
+          weight: function( itemElem ) {
+          var weight = $( itemElem ).find('.weight').text();
+          return parseFloat( weight.replace( /[\(\)]/g, '') );
+        }
+      }*/
+    });
+  })
+  $route.reload();
+
+
+  $('#restOfBody').show();
+  //This happens because of the route reload above
+  if (buttonPressed !=null){
+    console.log("ADDING lastFilterPressedDataFilter:"+lastFilterPressedDataFilter+ " lastSortByValueDataFilter:"+lastSortByValueDataFilter)
+    $( document ).ready(function() {
+      $('.sortButton').removeClass('is-checked');
+      $('.filtersButton').removeClass('is-checked');
+
+      $('.filtersButton[data-filter="'+lastFilterPressedDataFilter+'"]').addClass('is-checked');
+      $('.sortButton[data-sort-by="'+lastSortByValueDataFilter+'"]').addClass('is-checked');
+    })
+  }
+  if (lastSortByValue!==null){
+
+  }
+})
+}).catch(function(error) {
+  $.unblockUI();
+  bootbox.alert("There was an error, please contact support: "+error)
+});
 }
 
 function cleanString(str){
@@ -1510,41 +1791,72 @@ function getParameter(parameter){
 }
 
 function distance(lat1, lon1, lat2, lon2, unit) {
-	if ((lat1 == lat2) && (lon1 == lon2)) {
-		return 0;
-	}
-	else {
-		var radlat1 = Math.PI * lat1/180;
-		var radlat2 = Math.PI * lat2/180;
-		var theta = lon1-lon2;
-		var radtheta = Math.PI * theta/180;
-		var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
-		if (dist > 1) {
-			dist = 1;
-		}
-		dist = Math.acos(dist);
-		dist = dist * 180/Math.PI;
-		dist = dist * 60 * 1.1515;
-		if (unit=="K") { dist = dist * 1.609344 }
-		if (unit=="N") { dist = dist * 0.8684 }
-		return dist;
-	}
+  if ((lat1 == lat2) && (lon1 == lon2)) {
+    return 0;
+  }
+  else {
+    var radlat1 = Math.PI * lat1/180;
+    var radlat2 = Math.PI * lat2/180;
+    var theta = lon1-lon2;
+    var radtheta = Math.PI * theta/180;
+    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    if (dist > 1) {
+      dist = 1;
+    }
+    dist = Math.acos(dist);
+    dist = dist * 180/Math.PI;
+    dist = dist * 60 * 1.1515;
+    if (unit=="K") { dist = dist * 1.609344 }
+    if (unit=="N") { dist = dist * 0.8684 }
+    return dist;
+  }
 }
 
 
 function loadGeocoderAndConvertToGps(address, city){
-geocoder = new google.maps.Geocoder();
+  geocoder = new google.maps.Geocoder();
 
 
-geocoder.geocode( { 'address': address}, function(results, status) {
-  console.log("GOT ADDRESS!!! address:"+address)
-  if (status == 'OK') {
-    console.log("GOT IT:"+results[0].geometry.location)
-  } else {
-    console.log("could not get GPS")
-  }
-});
+  geocoder.geocode( { 'address': address}, function(results, status) {
+    console.log("GOT ADDRESS!!! address:"+address)
+    if (status == 'OK') {
+      console.log("GOT IT:"+results[0].geometry.location)
+    } else {
+      console.log("could not get GPS")
+    }
+  });
 }
+
+
+function handleImageUpload(imageFile, imageRef, $scope, dealToUpdate) {
+
+  //var imageFile = event.target.files[0];
+  console.log('originalFile instanceof Blob', imageFile instanceof Blob); // true
+  console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
+
+  var options = {
+    maxSizeMB: .5,
+    maxWidthOrHeight: 500,
+    useWebWorker: true
+  }
+  imageCompression(imageFile, options)
+  .then(function (compressedFile) {
+    console.log('compressedFile instanceof Blob', compressedFile instanceof Blob); // true
+    console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
+    var uploadTask = imageRef.put(compressedFile)
+    .then(snapshot => snapshot.ref.getDownloadURL())
+    .then((url) => {
+      //.then(function(snapshot) {
+      console.log('url:'+url);
+      return addUpdateDealFunction(url, $scope, dealToUpdate)
+    });
+    //return uploadToServer(compressedFile); // write your own logic
+  })
+  .catch(function (error) {
+    console.log(error.message);
+  });
+}
+
 
 
 // external js: isotope.pkgd.js
