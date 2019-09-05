@@ -24,7 +24,13 @@ var store_selected;
 var allDealsRetrieved=null;
 var local_lat;
 var local_lng;
-//firebase.functions().useFunctionsEmulator("http://localhost:5001")
+var testLocal = true;
+if(testLocal){
+  firebase.functions().useFunctionsEmulator("http://localhost:5001")
+  local_lat = 42.0238449
+  local_lng = -87.6874041
+}
+//
 var addUpdateDeal = firebase.functions().httpsCallable('addUpdateDeal');
 var getDealsForStore = firebase.functions().httpsCallable('getDealsForStore');
 var deleteDeal =  firebase.functions().httpsCallable('deleteDeal');
@@ -569,7 +575,7 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
     }
     setTimeout(
       function() {
-        $('#addStoreModal').modal('hide');
+        //$('#addStoreModal').modal('hide');
       }, 1000);
 
 
@@ -839,6 +845,14 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
     //$('.leafButton').addClass("active")
     //return;
 
+    $scope.convertDistanceAway = function(d){
+      console.log("ConvertDistanceAway")
+      if (d === undefined || d===null){
+        return ""
+      }
+      //console.log("returning miles")
+      return d.toFixed(1) +" miles away"
+    }
 
     $("#locationInputDeals").on("keyup", function(){
       // do stuff;
@@ -882,12 +896,17 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       var fil = $( this ).attr('data-filter')
       lastFilterPressedDataFilter=$( this ).attr('data-filter')
 
-      console.log("lastFilterPressed:"+fil);
+      console.log("lastFilterPressed:"+fil+ "lastSortByValue:"+lastSortByValue);
+
       if (fil === "*"){
 
         lastFilterPressed=null;
         if (lastSortByValue!==null){
-          dataUp = {sort_by : lastSortByValue}
+          if (lastSortByValue==="distanceaway" && local_lat!==undefined){
+            dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+          }else{
+            dataUp = {sort_by : lastSortByValue}
+          }
         }else{
           dataUp = {}
         }
@@ -901,7 +920,11 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       lastFilterPressed = filterToSendUp;
       var dataUp;
       if (lastSortByValue!==null){
-        dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+          if (lastSortByValue==="distanceaway" && local_lat!==undefined){
+            dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+          }else{
+            dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+          }
       }else{
         dataUp = {type : lastFilterPressed}
       }
@@ -914,6 +937,68 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       var sort = $( this ).attr('data-sort-by')
       lastSortByValueDataFilter=$( this ).attr('data-sort-by');
       console.log("sort pressed:"+sort);
+
+      if(sort === "distanceaway"){
+        console.log("SORTING distanceAway")
+        lastSortByValue = "distanceaway"
+        if (navigator.geolocation) {
+          console.log('Geolocation is supported!');
+        }else {
+          bootbox.alert("Could not determine location.")
+          return;
+        }
+        var startPos;
+        var geoSuccess = function(position) {
+          $.unblockUI();
+          console.log("SUCCESS")
+          console.log("lat:"+position.coords.latitude+ "lng:" +position.coords.longitude)
+          local_lat=position.coords.latitude;
+          local_lng=position.coords.longitude;
+          console.log("local lat:"+local_lat)
+          var dataUp;
+          if(lastFilterPressed!==null && lastFilterPressed!==undefined){
+             dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+          }else{
+             dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+          }
+
+          //          getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
+
+          getDealsFunction($scope, "", dataUp, $route, $( this ))
+          return;
+
+        }
+        var geoError = function(error) {
+          $.unblockUI();
+          switch(error.code) {
+            case error.TIMEOUT:
+            // The user didn't accept the callout
+            console.log("user did not accept")
+            break;
+          }
+        };
+        //$('.distanceaway').show();
+        //};
+        //Uncomment me to add distance away....took it out
+        blockIt()
+        if(testLocal){
+          lastSortByValue = "distanceaway"
+          var dataUp = {sort_by : "distanceaway", user_lat : 42.0238449, user_long : -87.6874041}
+          getDealsFunction($scope, "", dataUp, $route, $( this ))
+          //42.0238449lng:-87.6874041
+        }else{
+          navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
+        }
+
+
+        //$grid.isotope({
+        //  sortBy: sortByValue,
+        //  sortAscending: true
+        //});
+        return;
+      }
+
+
       if (sort === "*"){
 
         lastSortByValue=null;
@@ -1171,21 +1256,21 @@ $grid.isotope({ filter: filterValue });
 //LOCATION INPUT
 /*
 $("#locationInputDeals").on("keyup", function(){
-  // do stuff;
-  console.log("key up on location")
-  //filterValue = filterFns[ filterValue ] || filterValue;
-  console.log("loc:"+$(".locationValue").val())
-  var filterValue = cleanString($(".locationValue").val())
-  if (filterValue !== ''){
-    filterValue = "." + filterValue
-  }
+// do stuff;
+console.log("key up on location")
+//filterValue = filterFns[ filterValue ] || filterValue;
+console.log("loc:"+$(".locationValue").val())
+var filterValue = cleanString($(".locationValue").val())
+if (filterValue !== ''){
+filterValue = "." + filterValue
+}
 
-  //filterValue = addButtonFilter(filterValue)
+//filterValue = addButtonFilter(filterValue)
 
-  //console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
-  filterValue = filterFns[ filterValue ] || filterValue;
-  //console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
-  $grid.isotope({ filter: filterValue });
+//console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+filterValue = filterFns[ filterValue ] || filterValue;
+//console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+$grid.isotope({ filter: filterValue });
 });*/
 
 //SEARCH INPUT
@@ -1245,10 +1330,10 @@ $('#sorts').on( 'click', 'button', function() {
 
           }
         }
-
+        $('.distanceaway').show();
       };
       //Uncomment me to add distance away....took it out
-      //navigator.geolocation.getCurrentPosition(geoSuccess);
+      navigator.geolocation.getCurrentPosition(geoSuccess);
 
 
       $grid.isotope({
@@ -1401,7 +1486,6 @@ function handleLikeFunction(aDeal, $scope, $event){
 }
 
 function getDealsFunction($scope, searchParameter, dataUp, $route, buttonPressed){
-  console.log("ButtonPressed:"+JSON.stringify(buttonPressed))
   blockIt();
   var data={}
   if (data!==undefined){
@@ -1411,12 +1495,26 @@ function getDealsFunction($scope, searchParameter, dataUp, $route, buttonPressed
   //$('.navBarFooter').hide();
   getDeals(data)
   .then( function(result) {
-    console.log('getDeals', result);
+    console.log('getDeals', JSON.stringify(result.data));
     $scope.$apply(function () {
       $.unblockUI();
       $scope.deals=result.data;
       allDealsRetrieved = result.data;
       //updateHearts();
+      $route.reload();
+
+      if (data!==null && data.hasOwnProperty('user_lat')){
+        $( document ).ready(function() {
+          console.log("SHOWING DISTANCE AWAY")
+          $('.distanceaway').show();
+          $('.sortButton').removeClass('is-checked');
+          $('.filtersButton').removeClass('is-checked');
+          $('.filtersButton[data-filter="'+lastFilterPressedDataFilter+'"]').addClass('is-checked');
+          $('.sortButton[data-sort-by="'+"distanceaway"+'"]').addClass('is-checked');
+        })
+        $('#restOfBody').show();
+        return;
+      }
 
       var searchParameter = getParameter("s")
       var filterValue = "*"
@@ -1467,7 +1565,6 @@ function getDealsFunction($scope, searchParameter, dataUp, $route, buttonPressed
     $( document ).ready(function() {
       $('.sortButton').removeClass('is-checked');
       $('.filtersButton').removeClass('is-checked');
-
       $('.filtersButton[data-filter="'+lastFilterPressedDataFilter+'"]').addClass('is-checked');
       $('.sortButton[data-sort-by="'+lastSortByValueDataFilter+'"]').addClass('is-checked');
     })
@@ -1823,6 +1920,20 @@ function loadGeocoderAndConvertToGps(address, city){
       console.log("GOT IT:"+results[0].geometry.location)
     } else {
       console.log("could not get GPS")
+    }
+  });
+}
+
+function getAddressFromGps(latNum, lngNum){
+  geocoder = new google.maps.Geocoder();
+  var latlng = {lat: parseFloat(latNum), lng: parseFloat(lngNum)};
+
+
+  geocoder.geocode( { 'location': latlng}, function(results, status) {
+    if (status == 'OK') {
+      console.log("GOT IT:"+results[0].formatted_address)
+    } else {
+      console.log("could not get address")
     }
   });
 }

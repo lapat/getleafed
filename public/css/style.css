@@ -211,6 +211,11 @@ ul.nav a:hover { color: #fff !important; }
   left: 11px;
   bottom: -3px;
 }
+.element-item .type {
+  position: absolute;
+  left: 150px;
+  bottom: 22px;
+}
 .element-item .rightBottom {
   position: absolute;
   right: 8px;

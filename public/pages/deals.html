@@ -60,7 +60,7 @@
         <div id="sorts" class="button-group">
           <button class="button is-checked sortButton" data-sort-by="utcTime">Newest</button>
           <button class="button sortButton" data-sort-by="views">Views</button>
-          <!--<button class="button sortButton" data-sort-by="distanceaway">Closest</button>-->
+          <button class="button sortButton" data-sort-by="distanceaway">Closest</button>
           <button class="button sortButton" data-sort-by="likes">Hot Deals</button>
 
         </div>
@@ -97,11 +97,14 @@
           <i class="fas fa-map-marker-alt" style="margin-right:5px;font-size:85%;"></i>
           <span style="font-size:85%">{{aDeal.store_data.city}}</span>
         </span>
-        <!--<span class="distanceAwayLocation">
-          <span style="font-size:55%;" class="distanceaway">{{handleDistanceAway(aDeal.store_data.distance_away)}}</span>
-
-          <span style="font-size:55%;" >miles away</span>
-        </span>-->
+        <span class="distanceAwayLocation">
+          <span style="font-size:55%;" class="distanceaway" >{{convertDistanceAway(aDeal.distance_away)}} </span>
+          <!--<span style="font-size:55%;" >miles away</span>-->
+        </span>
+        <span class="type">
+          <span style="font-size:75%;" class="" >{{aDeal.type}} </span>
+          <!--<span style="font-size:55%;" >miles away</span>-->
+        </span>
 
         <span class="utcTime" style="display:none" >{{aDeal.utc_time}}</span>
 
@@ -237,8 +240,8 @@
     </div>
   </div>
 
-    <div class="text-center">
+    <!--<div class="text-center">
       <a href="" style="font-size:32px;"> Show More</a>
-    </div>
+    </div>-->
 
   </div>
