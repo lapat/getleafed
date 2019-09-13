@@ -107,7 +107,7 @@
 </div>
 
 <div class="col-sm">
-  <p style="font-size:120%">Other Deals At High Times Dispensary</p>
+  <p style="font-size:120%">Other Deals At {{deal_picked.store_data.store_name}}</p>
   <ul class="list-group list-group-flush">
     <span ng-repeat="aDeal in dealsAtSameStore" ng-click="clickedOnDealAtSameStore(aDeal)">
     <li class="list-group-item">
@@ -120,7 +120,7 @@
   <ul class="list-group list-group-flush">
     <span ng-repeat="aDeal in dealsAtSameCity" ng-click="clickedOnDealAtSameStore(aDeal)">
     <li class="list-group-item">
-      <a href="">{{aDeal.deal_name}}</a>
+      <a href="">{{aDeal.deal_name}} - {{aDeal.store_data.store_name}}</a>
     </li>
     </span>
   </ul>

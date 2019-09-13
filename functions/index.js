@@ -14,7 +14,12 @@ sgClient1.setApiKey('SG.K5fvNAJ6QEKEO_ykzWSPZg.UNsVwygV_wYmj-wsIdTkoNCsgxFzyI96G
 //  response.send("Hello from Firebase!");
 // });
 
-
+//req.params.id, req.body
+exports.redirectFunction = functions.https.onRequest((req, res) => {
+  console.log("req.params.id:"+JSON.stringify(req.params["0"])+" req.body:"+JSON.stringify(req.body))
+  var pageToGoTo = req.params["0"].substring(1,req.params["0"].length)
+  console.log("pageToGoTo:"+pageToGoTo)
+})
 
 exports.hitAllApi = functions.https.onRequest((req, res) => {
   console.log("hitAllApi...")
@@ -212,7 +217,7 @@ function addUpdateUserFunction(data, uid){
           .then(function(querySnapshot) {
             querySnapshot.forEach(function(doc) {
               var deal = doc.data();
-              if (deal.store_data.hasOwnProperty('gps_lat')){
+              if (deal.store_data !==null && deal.store_data.hasOwnProperty('gps_lat')){
                 console.log("Got a GPS")
                 var daway = distance(deal.store_data.gps_lat,
                   deal.store_data.gps_lng,

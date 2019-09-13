@@ -5,7 +5,7 @@ var config = {
 };
 if (!firebase.apps.length) {
   console.log("INIT")
-  firebase.initializeApp({config});
+  firebase.initializeApp(config);
 }else{
   console.log("ALREADY INIT")
 }
@@ -24,7 +24,7 @@ var store_selected;
 var allDealsRetrieved=null;
 var local_lat;
 var local_lng;
-var testLocal = true;
+var testLocal = false;
 if(testLocal){
   firebase.functions().useFunctionsEmulator("http://localhost:5001")
   local_lat = 42.0238449
@@ -75,8 +75,18 @@ getLeafed.config(function($routeProvider) {
     templateUrl : 'pages/user_profile.html',
     controller  : 'userDealController',
   })
+  .when('/about_us', {
+    templateUrl : 'pages/about_us.html',
+    controller  : 'aboutUsController',
+  })
   //user_profile
   //
+})
+
+getLeafed.controller('aboutUsController', function($scope, $location) {
+  console.log("aboutUsController")
+  navBarUser();
+  showBody();
 })
 
 getLeafed.controller('userDealController', function($scope, $location) {
@@ -423,7 +433,7 @@ $scope.clickedOnDealRow = function(aDeal){
     $('#previous_price').val(aDeal.previous_price)
     $('#new_price').val(aDeal.new_price)
     $('.whichStore').text(aDeal.which_store)
-    //store_selected = aStore
+    store_selected = aDeal.store_data;
 
     $('.whichStore').attr('data-id', aDeal.store_id);
     if (aDeal.is_active){
@@ -742,7 +752,6 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       clickedOnHeartFunction(aDeal, $scope, e)
     }
 
-
     var localDeal = checkLocalDeals(dealId);
     if (localDeal!==null){
       $scope.deal_picked = localDeal;
@@ -753,11 +762,14 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       $('#restOfBody').show();
 
       getSideBarDealPage($scope, $scope.deal_picked);
+
+      updateViewForDealFunction($scope.deal_picked, $scope);
+
     }else{
       blockIt();
       getDeals({id:dealId})
       .then( function(result) {
-        console.log('getDeals', result);
+        //console.log('getDeals', result);
         $scope.$apply(function () {
           $.unblockUI();
           $scope.deal_picked = result.data;
@@ -846,7 +858,7 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
     //return;
 
     $scope.convertDistanceAway = function(d){
-      console.log("ConvertDistanceAway")
+      //console.log("ConvertDistanceAway")
       if (d === undefined || d===null){
         return ""
       }
@@ -920,11 +932,11 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       lastFilterPressed = filterToSendUp;
       var dataUp;
       if (lastSortByValue!==null){
-          if (lastSortByValue==="distanceaway" && local_lat!==undefined){
-            dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
-          }else{
-            dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
-          }
+        if (lastSortByValue==="distanceaway" && local_lat!==undefined){
+          dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+        }else{
+          dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+        }
       }else{
         dataUp = {type : lastFilterPressed}
       }
@@ -957,9 +969,9 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
           console.log("local lat:"+local_lat)
           var dataUp;
           if(lastFilterPressed!==null && lastFilterPressed!==undefined){
-             dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+            dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
           }else{
-             dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+            dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
           }
 
           //          getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
@@ -1147,34 +1159,35 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
   }
 
   function addButtonFilter(filterValue){
-    if ($('.leafButton').hasClass('is-checked')){
-      filterValue = filterValue + ".leaf"
-    }else if ($('.vapeButton').hasClass('is-checked')){
-      console.log("YES YES")
-      filterValue = filterValue + ".vape"
-    }else if ($('.ediblesButton').hasClass('is-checked')){
-      filterValue = filterValue + ".edibles"
-    }
-    return filterValue
+    /*if ($('.leafButton').hasClass('is-checked')){
+    filterValue = filterValue + ".leaf"
+  }else if ($('.vapeButton').hasClass('is-checked')){
+  filterValue = filterValue + ".vape"
+}else if ($('.ediblesButton').hasClass('is-checked')){
+filterValue = filterValue + ".edibles"
+}else if ($('.ediblesButton').hasClass('is-checked')){
+filterValue = filterValue + ".edibles"
+}*/
+return filterValue
 
-  }
+}
 
 
 
 
-  function loadOtherFunctionsForDeals($scope){
+function loadOtherFunctionsForDeals($scope){
 
-    /*if (searchParameter!==""){
-    console.log("searchParameter:"+searchParameter)
-    searchStrDecoded = decodeURI(searchParameter)
-    console.log("searchStrDecoded:"+searchStrDecoded)
-    var filterValue = cleanString(searchStrDecoded)
-    if (filterValue !== ''){
-    filterValue = "." + filterValue
-  }
-  filterValue = addButtonFilter(filterValue)
-  console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
-  $grid.isotope({ filter: filterValue });
+  /*if (searchParameter!==""){
+  console.log("searchParameter:"+searchParameter)
+  searchStrDecoded = decodeURI(searchParameter)
+  console.log("searchStrDecoded:"+searchStrDecoded)
+  var filterValue = cleanString(searchStrDecoded)
+  if (filterValue !== ''){
+  filterValue = "." + filterValue
+}
+filterValue = addButtonFilter(filterValue)
+console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+$grid.isotope({ filter: filterValue });
 }*/
 var searchParameter = getParameter("s")
 var filterValue = ""
@@ -1765,12 +1778,10 @@ function checkPostADealData(image_name){
     }
   }
 
-  if (image_name ==='' || image_name ===undefined || image_name===null){
-    image_name = "/images/temp.jpg"
-  }
+
 
   console.log("deal type:"+$('.dealType').text().trim())
-  console.log("Store Selected:"+JSON.stringify(store_selected))
+  console.log("Store Selected***:"+JSON.stringify(store_selected))
   var data = {
     deal_name : $('#deal_name').val(),
     deal_description : $('#deal_description').val(),
@@ -1785,6 +1796,29 @@ function checkPostADealData(image_name){
     utc_time : (Math.floor(Date.now() / 1000)),
     type : $('.dealType').text().trim()
   }
+
+  console.log("****text:"+$('#modalLabel').text()+ " image_name:"+image_name);
+  $( document ).ready(function() {
+    if ($('#modalLabel').text() === "Update Deal"){
+      if (image_name ==='' || image_name ===undefined || image_name===null){
+        console.log("It's an update deal and no new image was selected****")
+        data = {
+          deal_name : $('#deal_name').val(),
+          deal_description : $('#deal_description').val(),
+          which_store : $('.whichStore').text(),
+          store_data : store_selected,
+          store_id : $('.whichStore').attr("data-id"),
+          previous_price : $('#previous_price').val(),
+          new_price : $('#new_price').val(),
+          is_active : $("#is_active").prop("checked"),
+          uid : firebase_user_object.uid,
+          utc_time : (Math.floor(Date.now() / 1000)),
+          type : $('.dealType').text().trim()
+        }
+      }
+    }
+  })
+
   return data;
 }
 
@@ -1942,8 +1976,8 @@ function getAddressFromGps(latNum, lngNum){
 function handleImageUpload(imageFile, imageRef, $scope, dealToUpdate) {
 
   //var imageFile = event.target.files[0];
-  console.log('originalFile instanceof Blob', imageFile instanceof Blob); // true
-  console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
+  //console.log('originalFile instanceof Blob', imageFile instanceof Blob); // true
+  //console.log(`originalFile size ${imageFile.size / 1024 / 1024} MB`);
 
   var options = {
     maxSizeMB: .5,
@@ -1952,13 +1986,15 @@ function handleImageUpload(imageFile, imageRef, $scope, dealToUpdate) {
   }
   imageCompression(imageFile, options)
   .then(function (compressedFile) {
-    console.log('compressedFile instanceof Blob', compressedFile instanceof Blob); // true
-    console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
+    //console.log('compressedFile instanceof Blob', compressedFile instanceof Blob); // true
+    //console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
     var uploadTask = imageRef.put(compressedFile)
-    .then(snapshot => snapshot.ref.getDownloadURL())
-    .then((url) => {
+    .then(function(snapshot) { return snapshot.ref.getDownloadURL()})
+    .then(function(url)  {
+      //.then(snapshot => snapshot.ref.getDownloadURL())
+      //.then((url) => {
       //.then(function(snapshot) {
-      console.log('url:'+url);
+      //console.log('url:'+url);
       return addUpdateDealFunction(url, $scope, dealToUpdate)
     });
     //return uploadToServer(compressedFile); // write your own logic

@@ -39,12 +39,18 @@
   <div class="row">
     <div class="col-sm">
       <div id="filters" class="button-group">
-        <button class="button filtersButton is-checked" data-filter="*">Show All</button>
-        <button class="button leafButton filtersButton" data-filter=".leaf">Leaf</button>
-        <button class="button vapeButton filtersButton" data-filter=".vape">Vape</button>
-        <button class="button ediblesButton filtersButton" data-filter=".edibles">Edibles</button>
-        <button class="button cbdButton filtersButton" data-filter=".CBD">CBD</button>
-        <button class="button kratomButton filtersButton" data-filter=".kratom">Kratom</button>
+        <button class="button filtersButton is-checked  btn-sm" data-filter="*">Show All</button>
+        <button class="button leafButton filtersButton btn-sm" data-filter=".leaf">Flower</button>
+        <button class="button vapeButton filtersButton btn-sm" data-filter=".vape">Vape</button>
+        <button class="button ediblesButton filtersButton btn-sm" data-filter=".edibles">Edibles</button>
+        <button class="button btn-sm  filtersButton" data-filter=".concentrates">Concentrates</button>
+        <button class="button btn-sm  filtersButton" data-filter=".wax">Wax</button>
+        <button class="button btn-sm  filtersButton" data-filter=".topical">Topical</button>
+        <button class="button btn-sm  filtersButton" data-filter=".accessories">Accessories</button>
+        <button class="button btn-sm  filtersButton" data-filter=".apparal">Apparal</button>
+        <button class="button btn-sm  filtersButton" data-filter=".other">Other</button>
+        <!--<button class="button cbdButton filtersButton" data-filter=".CBD">CBD</button>
+        <button class="button kratomButton filtersButton" data-filter=".kratom">Kratom</button>-->
         <!--
 
 
@@ -58,10 +64,10 @@
       </div>
       <div class="col-sm">
         <div id="sorts" class="button-group">
-          <button class="button is-checked sortButton" data-sort-by="utcTime">Newest</button>
-          <button class="button sortButton" data-sort-by="views">Views</button>
-          <button class="button sortButton" data-sort-by="distanceaway">Closest</button>
-          <button class="button sortButton" data-sort-by="likes">Hot Deals</button>
+          <button class="button is-checked sortButton  btn-sm" data-sort-by="utcTime">Newest</button>
+          <button class="button sortButton  btn-sm" data-sort-by="views">Views</button>
+          <button class="button sortButton  btn-sm" data-sort-by="distanceaway">Closest</button>
+          <button class="button sortButton  btn-sm" data-sort-by="likes">Hot Deals</button>
 
         </div>
       </div>
@@ -90,8 +96,11 @@
         </p>
         <span class="prices">
 
-        <span style='color:red;text-decoration:line-through;font-size: 12px;'>{{handleCurrency(aDeal.previous_price)}}</span>
+
+        <span style="font-size:75%;margin-left:0px;font-weight:bold;" class="" >{{aDeal.type}} </span>
+        <span style='color:red;text-decoration:line-through;font-size: 12px;margin-left:5px;'>{{handleCurrency(aDeal.previous_price)}}</span>
         <span style="font-size: 12px;"> {{handleCurrency(aDeal.new_price)}} </span>
+
         </span>
         <span class="distance">
           <i class="fas fa-map-marker-alt" style="margin-right:5px;font-size:85%;"></i>
@@ -101,10 +110,9 @@
           <span style="font-size:55%;" class="distanceaway" >{{convertDistanceAway(aDeal.distance_away)}} </span>
           <!--<span style="font-size:55%;" >miles away</span>-->
         </span>
-        <span class="type">
+        <!--<span class="type">
           <span style="font-size:75%;" class="" >{{aDeal.type}} </span>
-          <!--<span style="font-size:55%;" >miles away</span>-->
-        </span>
+        </span>-->
 
         <span class="utcTime" style="display:none" >{{aDeal.utc_time}}</span>
 
