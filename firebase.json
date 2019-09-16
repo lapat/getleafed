@@ -22,7 +22,12 @@
       {
         "source": "**",
         "destination": "/index.html"
+      },
+      {
+        "source": "/deal{,/**}"
+        "function": "/index.html"
       }
+
     ]
   },
   "storage": {

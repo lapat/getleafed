@@ -24,7 +24,7 @@ var store_selected;
 var allDealsRetrieved=null;
 var local_lat;
 var local_lng;
-var testLocal = false;
+var testLocal = true;
 if(testLocal){
   firebase.functions().useFunctionsEmulator("http://localhost:5001")
   local_lat = 42.0238449
@@ -630,10 +630,11 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
 
   })
 
-  function checkLocalDeals(dealId){
+  function checkLocalDeals(dealId, dealName){
+    console.log("checkLocalDeals:"+dealId + "dn:"+dealName)
     var index;
     for (index in allDealsRetrieved){
-      if (allDealsRetrieved[index].id === dealId){
+      if (allDealsRetrieved[index].id === dealId || allDealsRetrieved[index].deal_name === dealName){
         return allDealsRetrieved[index]
       }
     }
@@ -731,16 +732,45 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
     });
   }
 
+  function getDealNameFormatted(){
+    var dealName = "";
+    if (window.location.href.indexOf("/deal/")!==-1){
+      if (window.location.href.split("deal/").length > 1){
+        var afterDeal = window.location.href.split("deal/")[1]
+        var theDeal = afterDeal.split("/")[0];
+        console.log("THE DEAL:"+theDeal)
+        return theDeal;
+      }
+    }
+
+  }
+
+  function convertDealNameToReadableString(dealName){
+    dealName = dealName.replace(/[^a-zA-Z0-9 :]/g, ".");
+    dealName =  dealName.replace(/\s+/g, '-').toLowerCase();
+    dealName = dealName.replace(/\./g, "");
+    console.log("dealName:"+dealName)
+    return dealName
+  }
+  //convertDealNameToReadableString('this is a skdkdkdk')
+
   getLeafed.controller('aSingleDealController', function($scope, $location) {
     console.log("aSingleDealController")
     navBarUser();
     $('#restOfBody').hide();
     //codeGoogleMapAddress(cannabis_taxi_user_local.street_address + ", " + cannabis_taxi_user_local.city + ", "+ cannabis_taxi_user_local.state + " " + cannabis_taxi_user_local.zip)
     var dealId=getParameter("d");
+
+    //var dealNameFormatted = getDealNameFormatted();
+    var dealNameFormatted=""
     if(dealId===null || dealId===undefined || dealId===""){
-      bootbox.alert("Error, no deal id was specified.");
-      return;
+      if(dealNameFormatted===null || dealNameFormatted===undefined || dealNameFormatted==="" ){
+        bootbox.alert("Error, no deal was specified.");
+        return;
+      }
     }
+
+
 
     $scope.handleHeartClass = function(aDeal){
       console.log("handleHeartClass")
@@ -748,12 +778,12 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
     }
 
     $scope.clickedOnHeart = function(aDeal, e){
-
       clickedOnHeartFunction(aDeal, $scope, e)
     }
 
-    var localDeal = checkLocalDeals(dealId);
+    var localDeal = checkLocalDeals(dealId, dealNameFormatted);
     if (localDeal!==null){
+      console.log("got local deal...")
       $scope.deal_picked = localDeal;
       if ($scope.deal_picked.store_data.store_address!==undefined && $scope.deal_picked.store_data.store_address!==null && $scope.deal_picked.store_data.store_address!==""){
         codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
@@ -766,8 +796,10 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       updateViewForDealFunction($scope.deal_picked, $scope);
 
     }else{
+      console.log("no local...dealNameFormatted:"+dealNameFormatted)
+
       blockIt();
-      getDeals({id:dealId})
+      getDeals({id:dealId, deal_name_formatted : dealNameFormatted})
       .then( function(result) {
         //console.log('getDeals', result);
         $scope.$apply(function () {
@@ -785,6 +817,14 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       });
     }
 
+      /*$(".fakeLink").on("click", "a", function(event){
+
+          event.stopPropagation();
+          event.preventDefault();
+          console.log("FakeLink....")
+          alert('fuck"')
+
+    })*/
 
     $scope.clickedOnDealAtSameStore = function(aDeal){
       console.log('clickedOnDealOnDealPage aDeal:'+JSON.stringify(aDeal))
@@ -850,6 +890,13 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
     console.log("dealsController")
     navBarUser();
     $('#restOfBody').hide();
+
+    $scope.clickedOnFakeLink  = function(e){
+      if (e!==undefined){
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }
     //showBody();
     //$('#restOfBody').show();
 
@@ -1091,9 +1138,17 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       clickedOnHeartFunction(aDeal, $scope, e)
     }
 
-    $scope.clickedOnDealOnDealsPage = function(aDeal){
+    $scope.clickedOnDealOnDealsPage = function(aDeal, e){
       console.log('clickedOnDealOnDealsPage aDeal:'+JSON.stringify(aDeal))
-      window.location.href="/#/deal?d="+aDeal.id
+      if (e!==undefined){
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      //if(aDeal.deal_link_formatted!==undefined && aDeal.deal_link_formatted!==null && aDeal.deal_link_formatted!==''){
+      //  window.location.href=aDeal.deal_link_formatted
+      //}else{
+        window.location.href="/#/deal?d="+aDeal.id
+      //}
     }
 
     $scope.cleanString = function(str){
@@ -1778,11 +1833,12 @@ function checkPostADealData(image_name){
     }
   }
 
-
+  var dealNameFormatted = convertDealNameToReadableString($('#deal_name').val())
 
   console.log("deal type:"+$('.dealType').text().trim())
   console.log("Store Selected***:"+JSON.stringify(store_selected))
   var data = {
+    deal_link_formatted : "/deals/"+dealNameFormatted,
     deal_name : $('#deal_name').val(),
     deal_description : $('#deal_description').val(),
     which_store : $('.whichStore').text(),
@@ -1803,6 +1859,7 @@ function checkPostADealData(image_name){
       if (image_name ==='' || image_name ===undefined || image_name===null){
         console.log("It's an update deal and no new image was selected****")
         data = {
+          deal_link_formatted : "/deals/"+dealNameFormatted,
           deal_name : $('#deal_name').val(),
           deal_description : $('#deal_description').val(),
           which_store : $('.whichStore').text(),

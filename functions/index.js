@@ -21,6 +21,19 @@ exports.redirectFunction = functions.https.onRequest((req, res) => {
   console.log("pageToGoTo:"+pageToGoTo)
 })
 
+exports.dealRedirect = functions.https.onRequest((req, res) => {
+  /*console.log("req.params.id:"+JSON.stringify(req.params["0"])+" req.body:"+JSON.stringify(req.body))
+  var pageToGoTo = req.params["0"].substring(1,req.params["0"].length)
+  console.log("pageToGoTo:"+pageToGoTo)
+  res.redirect('index.html?b=JVZn14Yo4rVNTCqJHkFSadm0gTP2')
+  */
+  console.log("req.params.id:"+JSON.stringify(req.params["0"])+" req.body:"+JSON.stringify(req.body))
+  var pageToGoTo = req.params["0"].substring(1,req.params["0"].length)
+  console.log("pageToGoTo:"+pageToGoTo)
+  return(res.send("/deals/"+req.params["0"].substring(1,req.params["0"].length)))
+
+})
+
 exports.hitAllApi = functions.https.onRequest((req, res) => {
   console.log("hitAllApi...")
   return hitAllFunctions()
@@ -337,7 +350,16 @@ function addUpdateUserFunction(data, uid){
                 console.log("deals:"+JSON.stringify(deals))
                 return resolve(deals)
               })
-
+        }else if(data.hasOwnProperty('deal_name_formatted')){
+          refGet = db.collection('deals').where('deal_name_formatted', data.deal_name_formatted);
+          return refGet.get()
+          .then(function(querySnapshot) {
+            querySnapshot.forEach(function(doc) {
+              return resolve(doc.data())
+            })
+            console.log("Could not find a deal that matches that name")
+            return resolve({})
+          })
         }else if(data.hasOwnProperty('id')){
               refGet = db.collection('deals').doc(data.id);
               return refGet.get()
@@ -345,7 +367,6 @@ function addUpdateUserFunction(data, uid){
                 return(resolve(doc.data()));
               })
         }else{
-              console.log("HEREkkkkkk")
               refGet = db.collection('deals').orderBy('utc_time', 'desc');
               return refGet.get()
               .then(function(querySnapshot) {
