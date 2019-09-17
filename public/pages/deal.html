@@ -1,8 +1,8 @@
 
 <hr>
 <div class="container" style="margin-bottom:100px;margin-top:30px;">
-  <div class="row">
-    <div class="col-sm">
+  <div class="row" >
+    <div class="col-sm" id="mapColumn">
       <div class="card">
         <div class="card-body">
           <h6 class="card-subtitle mb-2 text-muted">{{deal_picked.store_data.store_name}}</h6>
@@ -10,6 +10,9 @@
           <div style="height:300px;width:100%;" id="map"></div>
         </div>
       </div>
+
+
+
       <script>
         var map, infoWindow, geocoder;
 
@@ -41,10 +44,18 @@
 
       }
 
-      function codeGoogleMapAddress(address) {
-        console.log("codeGoogleMapAddress address:"+address)
+      function codeGoogleMapAddress(aDeal) {
         //var address = document.getElementById('address').value;
-
+        if (aDeal.hasOwnProperty("online_only") || (!aDeal.hasOwnProperty("store_data"))){
+          if(aDeal.online_only==true || (!aDeal.hasOwnProperty("store_data")) || aDeal.store_data.street_address===""){
+            console.log("ONLINE ONLY")
+            $('#mapColumn').hide();
+            return;
+          }
+        }else{
+          $('#mapColumn').show();
+        }
+        var address = aDeal.store_data.street_address
         geocoder = new google.maps.Geocoder();
 
         console.log("updateMap called")
@@ -75,28 +86,37 @@
 
   </div>
 
+
+
   <div class="col-sm">
     <div class="card myCard" style="">
-      <img src="{{deal_picked.image_name}}" class="card-img img-fluid >
+      <div class="row text-center">
+        <div class="col-md-12 px-0">
+          <img src="{{deal_picked.image_name}}" class="img-fluid"  >
+        </div>
+      </div>
+
+
       <div class="card-body">
         <h5 class="card-title">{{deal_picked.deal_name}}</h5>
         <p class="card-text">{{deal_picked.deal_description}}</p>
+        <span style='color:red;text-decoration:line-through;font-size: 15px;'>{{handleCurrency(deal_picked.previous_price)}}</span>
+        <span style="font-size: 15px;"> {{handleCurrency(deal_picked.new_price)}}</span>
+        <br>
         <button type="button" class="btn btn-outline-success printMe">Print Coupon</button>
-
       </div>
       <ul class="list-group list-group-flush">
         <li class="list-group-item">
-          <a href="">{{deal_picked.store_data.store_name}}</a><br>{{deal_picked.store_data.store_address}}<br>
+          <a href="{{deal_picked.store_data.store_url}}" target="_blank">{{handleStoreUrl(deal_picked)}}</a>
+          <a href="{{deal_picked.deal_url}}" style="margin-left:10px;" target="_blank">{{handleDealUrl(deal_picked)}}</a>
+          <br>
+          {{handleAddress(deal_picked)}}
+          <br>
 
-          <span style='color:red;text-decoration:line-through;font-size: 12px;'>{{handleCurrency(deal_picked.price_before)}}</span>
-          <span style="font-size: 12px;"> {{handleCurrency(deal_picked.price_after)}}</span>
-          <i class="fas fa-map-marker-alt" style="margin-right:5px;font-size:85%;margin-left:15px;"></i><span style="font-size:85%">{{deal_picked.store_data.city}}</span>
+          <i class="fas fa-map-marker-alt showMarker" style="margin-right:5px;font-size:85%;margin-left:15px;"></i><span style="font-size:85%">{{deal_picked.store_data.city}}</span>
           <i class="fas fa-eye" style="font-size:85%;margin-left:15px;"></i>
           <span style="font-size:80%">{{handleLikesViews(deal_picked.views)}}</span>
-
-          <!--<i class="heart fa fa-heart-o" style="font-size:85%;margin-left:15px;"></i>-->
           <a href=""><i ng-click="clickedOnHeart(deal_picked, $event)" class="heart fa {{handleHeartClass(deal_picked)}}" style="font-size:85%;margin-left:15px;"></i></a>
-
           <span style="font-size:80%">{{handleLikesViews(deal_picked.likes)}}</span>
         </li>
       </ul>
@@ -105,26 +125,30 @@
     </div>-->
   </div>
 </div>
-
-<div class="col-sm">
-  <p style="font-size:120%">Other Deals At {{deal_picked.store_data.store_name}}</p>
-  <ul class="list-group list-group-flush">
-    <span ng-repeat="aDeal in dealsAtSameStore" ng-click="clickedOnDealAtSameStore(aDeal)">
-    <li class="list-group-item">
-      <a href="">{{aDeal.deal_name}}</a>
-    </li>
-    </span>
-  </ul>
-  <br>
-  <p style="font-size:120%">Other Deals Nearby</p>
-  <ul class="list-group list-group-flush">
-    <span ng-repeat="aDeal in dealsAtSameCity" ng-click="clickedOnDealAtSameStore(aDeal)">
-    <li class="list-group-item">
-      <a href="">{{aDeal.deal_name}} - {{aDeal.store_data.store_name}}</a>
-    </li>
-    </span>
-  </ul>
 </div>
+
+<div class="row" >
+  <div class="col-sm">
+    <p style="font-size:120%">
+      <a href="https://getleafed.com/#/?s={{deal_picked.store_data.store_name}}">Other Deals At {{deal_picked.store_data.store_name}}</a>
+    </p>
+    <ul class="list-group list-group-flush">
+      <span ng-repeat="aDeal in dealsAtSameStore" ng-click="clickedOnDealAtSameStore(aDeal)">
+        <li class="list-group-item">
+          <a href="https://getleafed.com/#/deal?d={{aDeal.id}}">{{aDeal.deal_name}}</a>
+        </li>
+      </span>
+    </ul>
+    <br>
+    <p style="font-size:120%">Other Deals Nearby</p>
+    <ul class="list-group list-group-flush">
+      <span ng-repeat="aDeal in dealsAtSameCity" ng-click="clickedOnDealAtSameStore(aDeal)">
+        <li class="list-group-item">
+          <a href="https://getleafed.com/#/deal?d={{aDeal.id}}">{{aDeal.deal_name}} - {{aDeal.store_data.store_name}}</a>
+        </li>
+      </span>
+    </ul>
+  </div>
 
 </div>
 

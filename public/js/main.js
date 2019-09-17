@@ -24,7 +24,7 @@ var store_selected;
 var allDealsRetrieved=null;
 var local_lat;
 var local_lng;
-var testLocal = true;
+var testLocal = false;
 if(testLocal){
   firebase.functions().useFunctionsEmulator("http://localhost:5001")
   local_lat = 42.0238449
@@ -79,9 +79,49 @@ getLeafed.config(function($routeProvider) {
     templateUrl : 'pages/about_us.html',
     controller  : 'aboutUsController',
   })
+  .when('/stores', {
+    templateUrl : 'pages/stores.html',
+    controller  : 'storesController',
+  })
   //user_profile
   //
 })
+
+getLeafed.run(['$rootScope', function($rootScope) {
+  //console.log("FUCK rootscope ran")
+
+  $rootScope.$on('$routeChangeSuccess', function(_, current) {
+    //if ($scope.deal_picked !== undefined && $scope.deal_picked !== null && $scope.deal_picked !== ""){
+    //document.title = $scope.deal_picked.store_data.store_name + " - "
+    //+ $scope.deal_picked.deal_name + " "
+    //+ $scope.deal_picked.store_data.city + ", " + $scope.deal_picked.store_data.state + " | getleafed";
+    //}
+
+    //document.title = "Cannabis Deals and Weed Coupons For Ounces, Shatter, Edibles, Wax and More - getleafed";
+  });
+}]);
+
+getLeafed.controller('storesController', function($scope, $location) {
+  console.log("storesController")
+  navBarUser();
+  showBody();
+  getStoresHelperStoresPage($scope)
+})
+
+function getStoresHelperStoresPage($scope){
+  blockIt();
+  getStores({get_all : 'true'})
+  .then( function(result) {
+    console.log('getStoresFunction', result);
+    $scope.$apply(function () {
+      $.unblockUI();
+      $scope.allStores=result.data;
+    })
+  }).catch(function(error) {
+    $.unblockUI();
+    bootbox.alert("There was an error, please contact support: "+error)
+  });
+}
 
 getLeafed.controller('aboutUsController', function($scope, $location) {
   console.log("aboutUsController")
@@ -262,6 +302,7 @@ function clearAddStoreInputs(){
   $('#email').val("")
   $('#store_name').val("")
   $('#street_address').val("")
+  $('#store_url').val("")
   $('#suite').val("")
   $('#zip').val("")
   $('#state').val("")
@@ -271,9 +312,15 @@ function clearAddStoreInputs(){
 
 function clearAddDealInputs(){
   $('#deal_name').val("");
-  $('#deal_description').val(""),
-  $('#previous_price').val(""),
+  $('#deal_description').val("")
+  $('#previous_price').val("")
   $('#new_price').val("")
+  //$('#is_deal').val("")
+
+  //$('#is_deal').prop("checked", true)
+
+  $('#price').val("")
+  $('#deal_url').val("")
   document.getElementById("imgInp").files = null;
   $('#dealImage').hide();
 }
@@ -328,22 +375,11 @@ getLeafed.controller('storeDealsController', function($scope, $location) {
     })
   })
 
-
-
   $scope.clickedOnStoreInUpdateDeal = function(aStore){
     $('.whichStore').text(aStore.store_name);
     $('.whichStore').attr('data-id', aStore.id);
     store_selected = aStore
   }
-  /*$(function(){
-  $(".whichStoreDropDown").on("click", "a", function(event){
-  var selected = $(this).html();
-  console.log("You clicked the drop downs", selected, " id:"+$(this).attr("data-id"))
-  $('.whichStore').text(selected)
-  $('.whichStore').attr('data-id', $(this).attr('data-id'));
-  console.log("id is now:" + $('.whichStore').attr("data-id"))
-})
-})*/
 
 //deleteDealButton
 $( ".deleteDealButton" ).click(function() {
@@ -407,6 +443,11 @@ $(".addDealRow").on('click', function(e) {
     $('.dealType').text("Type")
     $('#previous_price').val("")
     $('#new_price').val("")
+    $('#price').val(""),
+    $("#online_only").prop(""),
+    $("#is_deal").prop("checked"),
+
+    $('#deal_url').val(""),
     $('.whichStore').text("Which Store")
     $('#is_active').prop('checked', true);
     $('#modal').modal('show');
@@ -418,6 +459,7 @@ $(".addDealRow").on('click', function(e) {
 
 $scope.clickedOnDealRow = function(aDeal){
   lastDealClickedOn = aDeal;
+  console.log("deal:"+aDeal.deal_url)
   $(document).ready(function(){
     $('#modalLabel').text("Update Deal")
     document.getElementById("imgInp").files = null;
@@ -433,13 +475,24 @@ $scope.clickedOnDealRow = function(aDeal){
     $('#previous_price').val(aDeal.previous_price)
     $('#new_price').val(aDeal.new_price)
     $('.whichStore').text(aDeal.which_store)
-    store_selected = aDeal.store_data;
-
+    store_selected = aDeal.store_data
+    $('#price').val(aDeal.price)
+    $('#deal_url').val(aDeal.deal_url)
     $('.whichStore').attr('data-id', aDeal.store_id);
     if (aDeal.is_active){
       $('#is_active').prop('checked', true);
     }else{
       $('#is_active').prop('checked', false);
+    }
+    if(aDeal.is_deal){
+      $('#is_deal').prop('checked', true);
+    }else{
+      $('#is_deal').prop('checked', false);
+    }
+    if (aDeal.online_only){
+      $('#online_only').prop('checked', true);
+    }else{
+      $('#online_only').prop('checked', false);
     }
     //dealImage
     if (aDeal.image_name !== ''){
@@ -538,7 +591,7 @@ function checkForStores($scope){
         showAlert("You need to add a store on the Store Profile page before you add a deal.", true)
         $('#addStoreDeal').prop('disabled', true);
         $('.addDealRow').hide();
-        $('.updateStoreDeal').prop('disabled', true);
+        //$('.updateStoreDeal').prop('disabled', true);
 
       }
     })
@@ -603,6 +656,7 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
         $('#phone').val(aStore.phone);
         $('#store_name').val(aStore.store_name);
         $('#street_address').val(aStore.street_address);
+        $('#store_url').val(aStore.store_url);
         $('#suite').val(aStore.suite);
         $('#zip').val(aStore.zip);
         $('#city').val(aStore.city);
@@ -754,14 +808,30 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
   }
   //convertDealNameToReadableString('this is a skdkdkdk')
 
+  function getGoogleShoppingScript(aDeal){
+    var price = "";
+    if(aDeal.price!==undefined && aDeal.price!==null && aDeal.price!==""){
+      price = aDeal.price;
+    }
+    return JSON.stringify({
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": aDeal.deal_name,
+      "image": [aDeal.image_name],
+      "description": aDeal.deal_description,
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": price
+      }
+    })
+  }
+
   getLeafed.controller('aSingleDealController', function($scope, $location) {
     console.log("aSingleDealController")
     navBarUser();
     $('#restOfBody').hide();
-    //codeGoogleMapAddress(cannabis_taxi_user_local.street_address + ", " + cannabis_taxi_user_local.city + ", "+ cannabis_taxi_user_local.state + " " + cannabis_taxi_user_local.zip)
     var dealId=getParameter("d");
-
-    //var dealNameFormatted = getDealNameFormatted();
     var dealNameFormatted=""
     if(dealId===null || dealId===undefined || dealId===""){
       if(dealNameFormatted===null || dealNameFormatted===undefined || dealNameFormatted==="" ){
@@ -770,7 +840,39 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       }
     }
 
+    $scope.handleAddress = function(aDeal){
+      if(aDeal===undefined){
+        return "";
+      }
+      if (aDeal.store_data.street_address===""){
+        return "";
+      }
+      return aDeal.store_data.store_address
+    }
+    //handleDealUrl(
+    $scope.handleDealUrl = function(aDeal){
+      if (aDeal===undefined){
+        return ""
+      }
+      if (aDeal.hasOwnProperty("deal_url")){
+        return "Deal Url"
+      }else{
+        return ""
+      }
 
+    }
+    //handleStoreUrl
+    $scope.handleStoreUrl = function(aDeal){
+      if (aDeal===undefined){
+        return ""
+      }
+      if (aDeal.store_data.hasOwnProperty("store_url")){
+        return "Store Url"
+      }else{
+        return ""
+      }
+
+    }
 
     $scope.handleHeartClass = function(aDeal){
       console.log("handleHeartClass")
@@ -783,33 +885,16 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
 
     var localDeal = checkLocalDeals(dealId, dealNameFormatted);
     if (localDeal!==null){
-      console.log("got local deal...")
       $scope.deal_picked = localDeal;
-      if ($scope.deal_picked.store_data.store_address!==undefined && $scope.deal_picked.store_data.store_address!==null && $scope.deal_picked.store_data.store_address!==""){
-        codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
-      }
-      showBody();
-      $('#restOfBody').show();
-
-      getSideBarDealPage($scope, $scope.deal_picked);
-
-      updateViewForDealFunction($scope.deal_picked, $scope);
-
+      handleAllDealPageHtml(localDeal, $scope)
     }else{
-      console.log("no local...dealNameFormatted:"+dealNameFormatted)
-
       blockIt();
-      getDeals({id:dealId, deal_name_formatted : dealNameFormatted})
+      getDeals({id:dealId})
       .then( function(result) {
-        //console.log('getDeals', result);
         $scope.$apply(function () {
           $.unblockUI();
           $scope.deal_picked = result.data;
-          updateViewForDealFunction($scope.deal_picked, $scope);
-          codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
-          showBody();
-          $('#restOfBody').show();
-          getSideBarDealPage($scope, $scope.deal_picked);
+          handleAllDealPageHtml($scope.deal_picked, $scope)
         })
       }).catch(function(error) {
         $.unblockUI();
@@ -817,407 +902,425 @@ getLeafed.controller('storeProfileController', function($scope, $location) {
       });
     }
 
-      /*$(".fakeLink").on("click", "a", function(event){
+  $scope.clickedOnDealAtSameStore = function(aDeal){
+    console.log('clickedOnDealOnDealPage aDeal:'+JSON.stringify(aDeal))
+    window.location.href="/#/deal?d="+aDeal.id
+  }
 
-          event.stopPropagation();
-          event.preventDefault();
-          console.log("FakeLink....")
-          alert('fuck"')
+  $(".printMe").click(function() {
+    console.log("PRINT ME")
 
-    })*/
-
-    $scope.clickedOnDealAtSameStore = function(aDeal){
-      console.log('clickedOnDealOnDealPage aDeal:'+JSON.stringify(aDeal))
-      window.location.href="/#/deal?d="+aDeal.id
-    }
-
-    $(".printMe").click(function() {
-      console.log("PRINT ME")
-
-      window.print();
-
-    })
-
-    $scope.handleCurrency = function(currency){
-      return handleCurrencyFun(currency);
-    }
-
-    $scope.handleLikesViews=function(viewsLikes){
-      if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
-        return Number(0)
-      }else{
-        return Number(viewsLikes)
-      }
-    }
+    window.print();
 
   })
 
-
-
-  function getSideBarDealPage($scope, deal_picked){
-    console.log("getSideBarDealPage deal_picked:"+JSON.stringify(deal_picked))
-    getDeals({'store_name':deal_picked.store_data.store_name})
-    .then( function(result) {
-      console.log('getDeals storeName', result);
-      $scope.$apply(function () {
-        $scope.dealsAtSameStore = result.data
-        //$.unblockUI();
-        //$scope.deal_picked = result.data;
-        //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
-        //showBody();
-      })
-    }).catch(function(error) {
-      //bootbox.alert("There was an error, please contact support: "+error)
-    });
-    getDeals({'city':deal_picked.store_data.city})
-    .then( function(result) {
-      console.log('getDeals city', result);
-      $scope.$apply(function () {
-        $scope.dealsAtSameCity = result.data
-
-        //$scope.dealsAtSameStore = result.data
-        //$.unblockUI();
-        //$scope.deal_picked = result.data;
-        //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
-        //showBody();
-      })
-    }).catch(function(error) {
-      //bootbox.alert("There was an error, please contact support: "+error)
-    });
+  $scope.handleCurrency = function(currency){
+    return handleCurrencyFun(currency);
   }
 
-  getLeafed.controller('dealsController', function($scope, $location, $route) {
-    console.log("dealsController")
-    navBarUser();
-    $('#restOfBody').hide();
-
-    $scope.clickedOnFakeLink  = function(e){
-      if (e!==undefined){
-        e.stopPropagation();
-        e.preventDefault();
-      }
+  $scope.handleLikesViews=function(viewsLikes){
+    if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
+      return Number(0)
+    }else{
+      return Number(viewsLikes)
     }
-    //showBody();
-    //$('#restOfBody').show();
+  }
 
-    //$('.leafButton').addClass("is-checked")
-    //$('.leafButton').addClass("active")
-    //return;
+})
 
-    $scope.convertDistanceAway = function(d){
-      //console.log("ConvertDistanceAway")
-      if (d === undefined || d===null){
-        return ""
-      }
-      //console.log("returning miles")
-      return d.toFixed(1) +" miles away"
+function handleAllDealPageHtml(deal_picked, $scope){
+  //document.title = $scope.deal_picked.deal_name;
+  var dealDescriptionSeo = getTitle(deal_picked);;
+  document.title = dealDescriptionSeo
+  $('meta[name=description]').attr('content', dealDescriptionSeo);
+  $('.gooogleShoppingScript').text(getGoogleShoppingScript(deal_picked))
+  if (deal_picked.store_data.store_address!==undefined && deal_picked.store_data.store_address!==null && deal_picked.store_data.store_address!==""){
+    codeGoogleMapAddress(deal_picked)
+  }
+  if (deal_picked.store_data.street_address!==""){
+    $('.showMarker').show();
+  }else{
+    $('.showMarker').hide();
+  }
+  showBody();
+  $('#restOfBody').show();
+  getSideBarDealPage($scope, deal_picked);
+  updateViewForDealFunction(deal_picked, $scope);
+}
+function getTitle(deal_picked)
+{
+  if (deal_picked!==undefined){
+    var title=""
+    if (deal_picked.hasOwnProperty("store_data")){
+      title=deal_picked.store_data.store_name + " - "
+      + deal_picked.deal_name + " - "
+      + deal_picked.store_data.city + ", " + deal_picked.store_data.state + " | getleafed";
+    }else{
+      title= deal_picked.deal_name + " | getleafed";
     }
 
-    $("#locationInputDeals").on("keyup", function(){
-      // do stuff;
-      console.log("key up on location")
-      //filterValue = filterFns[ filterValue ] || filterValue;
-      console.log("loc:"+$(".locationValue").val())
-      var filterValue = cleanString($(".locationValue").val())
-      if (filterValue !== ''){
-        filterValue = "." + filterValue
-      }
+    return title;
+  }
+  return "";
+}
 
-      //filterValue = addButtonFilter(filterValue)
-
-      //console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
-      //filterValue = filterFns[ filterValue ] || filterValue;
-      //console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
-      $grid.isotope({ filter: filterValue });
-    });
-
-    $("#otherSearch").on("keyup", function(){
-      // do stuff;
-      console.log("key up on otherSearchValue")
-      //filterValue = filterFns[ filterValue ] || filterValue;
-      console.log("otherSearchValue:"+$(".otherSearchValue").val())
-      var filterValue = cleanString($(".otherSearchValue").val())
-      if (filterValue !== ''){
-        filterValue = "." + filterValue
-      }
-
-      filterValue = addButtonFilter(filterValue)
-
-
-      console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
-      //filterValue = filterFns[ filterValue ] || filterValue;
-      console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
-      $grid.isotope({ filter: filterValue });
-    });
-
-    $( ".filtersButton" ).click(function() {
-      console.log("FILTER BUTTON")
-      var fil = $( this ).attr('data-filter')
-      lastFilterPressedDataFilter=$( this ).attr('data-filter')
-
-      console.log("lastFilterPressed:"+fil+ "lastSortByValue:"+lastSortByValue);
-
-      if (fil === "*"){
-
-        lastFilterPressed=null;
-        if (lastSortByValue!==null){
-          if (lastSortByValue==="distanceaway" && local_lat!==undefined){
-            dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
-          }else{
-            dataUp = {sort_by : lastSortByValue}
-          }
-        }else{
-          dataUp = {}
-        }
-        console.log("calling getDealsFun - dataUp:"+JSON.stringify(dataUp))
-        getDealsFunction($scope, searchParameter, dataUp, $route, fil)
-        return;
-      }
-      var filterToSortBy=fil.replace(".","")
-      var filterToSendUp = filterToSortBy.charAt(0).toUpperCase() + filterToSortBy.substring(1);
-      console.log("fToSendUp:"+filterToSendUp)
-      lastFilterPressed = filterToSendUp;
-      var dataUp;
-      if (lastSortByValue!==null){
-        if (lastSortByValue==="distanceaway" && local_lat!==undefined){
-          dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
-        }else{
-          dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
-        }
-      }else{
-        dataUp = {type : lastFilterPressed}
-      }
-      getDealsFunction($scope, searchParameter, dataUp, $route, fil)
-      return;
+function getSideBarDealPage($scope, deal_picked){
+  console.log("getSideBarDealPage deal_picked:"+JSON.stringify(deal_picked))
+  getDeals({'store_name':deal_picked.store_data.store_name})
+  .then( function(result) {
+    console.log('getDeals storeName', result);
+    $scope.$apply(function () {
+      $scope.dealsAtSameStore = result.data
+      //$.unblockUI();
+      //$scope.deal_picked = result.data;
+      //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+      //showBody();
     })
+  }).catch(function(error) {
+    //bootbox.alert("There was an error, please contact support: "+error)
+  });
+  getDeals({'city':deal_picked.store_data.city})
+  .then( function(result) {
+    console.log('getDeals city', result);
+    $scope.$apply(function () {
+      $scope.dealsAtSameCity = result.data
 
-    $( ".sortButton" ).click(function() {
-      console.log("SORT BUTTON")
-      var sort = $( this ).attr('data-sort-by')
-      lastSortByValueDataFilter=$( this ).attr('data-sort-by');
-      console.log("sort pressed:"+sort);
-
-      if(sort === "distanceaway"){
-        console.log("SORTING distanceAway")
-        lastSortByValue = "distanceaway"
-        if (navigator.geolocation) {
-          console.log('Geolocation is supported!');
-        }else {
-          bootbox.alert("Could not determine location.")
-          return;
-        }
-        var startPos;
-        var geoSuccess = function(position) {
-          $.unblockUI();
-          console.log("SUCCESS")
-          console.log("lat:"+position.coords.latitude+ "lng:" +position.coords.longitude)
-          local_lat=position.coords.latitude;
-          local_lng=position.coords.longitude;
-          console.log("local lat:"+local_lat)
-          var dataUp;
-          if(lastFilterPressed!==null && lastFilterPressed!==undefined){
-            dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
-          }else{
-            dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
-          }
-
-          //          getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
-
-          getDealsFunction($scope, "", dataUp, $route, $( this ))
-          return;
-
-        }
-        var geoError = function(error) {
-          $.unblockUI();
-          switch(error.code) {
-            case error.TIMEOUT:
-            // The user didn't accept the callout
-            console.log("user did not accept")
-            break;
-          }
-        };
-        //$('.distanceaway').show();
-        //};
-        //Uncomment me to add distance away....took it out
-        blockIt()
-        if(testLocal){
-          lastSortByValue = "distanceaway"
-          var dataUp = {sort_by : "distanceaway", user_lat : 42.0238449, user_long : -87.6874041}
-          getDealsFunction($scope, "", dataUp, $route, $( this ))
-          //42.0238449lng:-87.6874041
-        }else{
-          navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
-        }
-
-
-        //$grid.isotope({
-        //  sortBy: sortByValue,
-        //  sortAscending: true
-        //});
-        return;
-      }
-
-
-      if (sort === "*"){
-
-        lastSortByValue=null;
-        if (lastFilterPressed!==null){
-          dataUp = {type : lastFilterPressed}
-        }else{
-          dataUp = {}
-        }
-        console.log("calling getDealsFun - dataUp:"+JSON.stringify(dataUp))
-        getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
-        return;
-      }
-      var sortBy=sort.replace(".","")
-      var sortToSendUp = sortBy;//sortBy.charAt(0).toUpperCase() + sortBy.substring(1);
-      console.log("sortToSendUp:"+sortToSendUp)
-      lastSortByValue = sortToSendUp;
-      var dataUp;
-      if (lastFilterPressed!==null){
-        dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
-      }else{
-        dataUp = {sort_by : lastSortByValue}
-      }
-      getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
-      return;
+      //$scope.dealsAtSameStore = result.data
+      //$.unblockUI();
+      //$scope.deal_picked = result.data;
+      //codeGoogleMapAddress($scope.deal_picked.store_data.store_address)
+      //showBody();
     })
+  }).catch(function(error) {
+    //bootbox.alert("There was an error, please contact support: "+error)
+  });
+}
 
-    var searchParameter = getParameter("s")
-    //To Do - search by search parameter if it's a cache load
-    showBody();
-    if (allDealsRetrieved!==null){
-      $.unblockUI();
-      $scope.deals=allDealsRetrieved;
-      $('#restOfBody').show();
-      //jQuery( function() {
-      //  loadOtherFunctionsForDeals()
-      //})
-    }else{
-      getDealsFunction($scope, searchParameter, null, $route, null)
-    }
+getLeafed.controller('dealsController', function($scope, $location, $route) {
+  console.log("dealsController")
+  navBarUser();
+  $('#restOfBody').hide();
 
-    $scope.convertToShortStringIfLong = function(str){
-      if (str===undefined){
-        return ""
-      }
-      if (str.length > 35){
-        return str.substring(0,35)+"..."
-      }
-      return str;
-    }
-
-    $scope.handleHeartClass = function(aDeal){
-      //$scope.$apply(function () {
-      return handleHeartClassFunction(aDeal)
-      //})
-    }
-
-    $scope.clickedOnStoreName  = function(aDeal, e){
-      if (e!==undefined){
-        e.stopPropagation();
-        e.preventDefault();
-      }
-      //console.log("HJEREsn:"+aDeal.store_data.store_name)
-      window.location.href="/#/?s="+aDeal.store_data.store_name
-      //return ("/#/?s="+aDeal.store_data.store_name)
-    }
-
-    $scope.handleDescription = function(description){
-      if (description === undefined){
-        return ""
-      }
-      if (description.length>80){
-        return description.substring(0,90)+"..."
-      }
-      return description;
-    }
-
-    $scope.clickedOnHeart = function(aDeal, e){
-      clickedOnHeartFunction(aDeal, $scope, e)
-    }
-
-    $scope.clickedOnDealOnDealsPage = function(aDeal, e){
-      console.log('clickedOnDealOnDealsPage aDeal:'+JSON.stringify(aDeal))
-      if (e!==undefined){
-        e.stopPropagation();
-        e.preventDefault();
-      }
-      //if(aDeal.deal_link_formatted!==undefined && aDeal.deal_link_formatted!==null && aDeal.deal_link_formatted!==''){
-      //  window.location.href=aDeal.deal_link_formatted
-      //}else{
-        window.location.href="/#/deal?d="+aDeal.id
-      //}
-    }
-
-    $scope.cleanString = function(str){
-      return cleanString(str)
-
-    }
-
-    $scope.handleDistanceAway=function(d){
-      if (d===undefined || d === "" || d ==null){
-        return Number(0)
-      }else{
-        return Number(d)
-      }
-    }
-
-    $scope.handleLikesViews=function(viewsLikes){
-      if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
-        return Number(0)
-      }else{
-        return Number(viewsLikes)
-      }
-    }
-
-    $scope.handleCurrency=function(amount){
-      return handleCurrencyFun(amount)
-
-    }
-
-  })
-
-  function clickedOnHeartFunction(aDeal, $scope, e){
-    console.log("heart")
-    e.stopPropagation();
-    e.preventDefault();
-    if (firebase_user_object!==undefined && firebase_user_object !== null){
-      console.log("GOOD")
-      handleLikeFunction(aDeal, $scope, e)
-    }else{
-      bootbox.alert("You have to be signed in to do that.", function(){
-        window.location.href = "/signin_user.html"
-      });
+  $scope.clickedOnFakeLink  = function(e){
+    if (e!==undefined){
+      e.stopPropagation();
+      e.preventDefault();
     }
   }
 
-  function handleHeartClassFunction(aDeal){
-    //console.log("handle heart class function")
-    if(firebase_user_object===null || firebase_user_object===undefined){
-      return "fa-heart-o"
-    }
-    var index;
-    if (thisUserLikesThisDeal(aDeal)){
-      return "fa-heart"
-    }else{
-      return "fa-heart-o"
-    }
-  }
-
-  function handleCurrencyFun(amount){
-    if (amount===undefined || amount === "" || amount ==null){
+  $scope.convertDistanceAway = function(d){
+    //console.log("ConvertDistanceAway")
+    if (d === undefined || d===null){
       return ""
     }
-    return "$"+formatMoney(amount)
+    //console.log("returning miles")
+    return d.toFixed(1) +" miles away"
   }
 
-  function addButtonFilter(filterValue){
-    /*if ($('.leafButton').hasClass('is-checked')){
-    filterValue = filterValue + ".leaf"
-  }else if ($('.vapeButton').hasClass('is-checked')){
-  filterValue = filterValue + ".vape"
+  $("#locationInputDeals").on("keyup", function(){
+    // do stuff;
+    console.log("key up on location")
+    //filterValue = filterFns[ filterValue ] || filterValue;
+    console.log("loc:"+$(".locationValue").val())
+    var filterValue = cleanString($(".locationValue").val())
+    if (filterValue !== ''){
+      filterValue = "." + filterValue
+    }
+
+    //filterValue = addButtonFilter(filterValue)
+
+    //console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+    //filterValue = filterFns[ filterValue ] || filterValue;
+    //console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+    $grid.isotope({ filter: filterValue });
+  });
+
+  $("#otherSearch").on("keyup", function(){
+    // do stuff;
+    console.log("key up on otherSearchValue")
+    //filterValue = filterFns[ filterValue ] || filterValue;
+    console.log("otherSearchValue:"+$(".otherSearchValue").val())
+    var filterValue = cleanString($(".otherSearchValue").val())
+    if (filterValue !== ''){
+      filterValue = "." + filterValue
+    }
+
+    filterValue = addButtonFilter(filterValue)
+
+
+    console.log("filterValue Before:"+filterValue+" String: "+JSON.stringify(filterValue))
+    //filterValue = filterFns[ filterValue ] || filterValue;
+    console.log("filterValue After:"+filterValue+" String: "+JSON.stringify(filterValue))
+    $grid.isotope({ filter: filterValue });
+  });
+
+  $( ".filtersButton" ).click(function() {
+    console.log("FILTER BUTTON")
+    var fil = $( this ).attr('data-filter')
+    lastFilterPressedDataFilter=$( this ).attr('data-filter')
+
+    console.log("lastFilterPressed:"+fil+ "lastSortByValue:"+lastSortByValue);
+
+    if (fil === "*"){
+
+      lastFilterPressed=null;
+      if (lastSortByValue!==null){
+        if (lastSortByValue==="distanceaway" && local_lat!==undefined){
+          dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+        }else{
+          dataUp = {sort_by : lastSortByValue}
+        }
+      }else{
+        dataUp = {}
+      }
+      console.log("calling getDealsFun - dataUp:"+JSON.stringify(dataUp))
+      getDealsFunction($scope, searchParameter, dataUp, $route, fil)
+      return;
+    }
+    var filterToSortBy=fil.replace(".","")
+    var filterToSendUp = filterToSortBy.charAt(0).toUpperCase() + filterToSortBy.substring(1);
+    console.log("fToSendUp:"+filterToSendUp)
+    lastFilterPressed = filterToSendUp;
+    var dataUp;
+    if (lastSortByValue!==null){
+      if (lastSortByValue==="distanceaway" && local_lat!==undefined){
+        dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+      }else{
+        dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+      }
+    }else{
+      dataUp = {type : lastFilterPressed}
+    }
+    getDealsFunction($scope, searchParameter, dataUp, $route, fil)
+    return;
+  })
+
+  $( ".sortButton" ).click(function() {
+    console.log("SORT BUTTON")
+    var sort = $( this ).attr('data-sort-by')
+    lastSortByValueDataFilter=$( this ).attr('data-sort-by');
+    console.log("sort pressed:"+sort);
+
+    if(sort === "distanceaway"){
+      console.log("SORTING distanceAway")
+      lastSortByValue = "distanceaway"
+      if (navigator.geolocation) {
+        console.log('Geolocation is supported!');
+      }else {
+        bootbox.alert("Could not determine location.")
+        return;
+      }
+      var startPos;
+      var geoSuccess = function(position) {
+        $.unblockUI();
+        console.log("SUCCESS")
+        console.log("lat:"+position.coords.latitude+ "lng:" +position.coords.longitude)
+        local_lat=position.coords.latitude;
+        local_lng=position.coords.longitude;
+        console.log("local lat:"+local_lat)
+        var dataUp;
+        if(lastFilterPressed!==null && lastFilterPressed!==undefined){
+          dataUp = {type : lastFilterPressed, sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+        }else{
+          dataUp = {sort_by : "distanceaway", user_lat : local_lat, user_long : local_lng}
+        }
+
+        //          getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
+
+        getDealsFunction($scope, "", dataUp, $route, $( this ))
+        return;
+
+      }
+      var geoError = function(error) {
+        $.unblockUI();
+        switch(error.code) {
+          case error.TIMEOUT:
+          // The user didn't accept the callout
+          console.log("user did not accept")
+          break;
+        }
+      };
+      //$('.distanceaway').show();
+      //};
+      //Uncomment me to add distance away....took it out
+      blockIt()
+      if(testLocal){
+        lastSortByValue = "distanceaway"
+        var dataUp = {sort_by : "distanceaway", user_lat : 42.0238449, user_long : -87.6874041}
+        getDealsFunction($scope, "", dataUp, $route, $( this ))
+        //42.0238449lng:-87.6874041
+      }else{
+        navigator.geolocation.getCurrentPosition(geoSuccess, geoError);
+      }
+
+
+      //$grid.isotope({
+      //  sortBy: sortByValue,
+      //  sortAscending: true
+      //});
+      return;
+    }
+
+
+    if (sort === "*"){
+
+      lastSortByValue=null;
+      if (lastFilterPressed!==null){
+        dataUp = {type : lastFilterPressed}
+      }else{
+        dataUp = {}
+      }
+      console.log("calling getDealsFun - dataUp:"+JSON.stringify(dataUp))
+      getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
+      return;
+    }
+    var sortBy=sort.replace(".","")
+    var sortToSendUp = sortBy;//sortBy.charAt(0).toUpperCase() + sortBy.substring(1);
+    console.log("sortToSendUp:"+sortToSendUp)
+    lastSortByValue = sortToSendUp;
+    var dataUp;
+    if (lastFilterPressed!==null){
+      dataUp = {type : lastFilterPressed, sort_by : lastSortByValue}
+    }else{
+      dataUp = {sort_by : lastSortByValue}
+    }
+    getDealsFunction($scope, searchParameter, dataUp, $route, $( this ))
+    return;
+  })
+
+  var searchParameter = getParameter("s")
+  //To Do - search by search parameter if it's a cache load
+  showBody();
+  if (allDealsRetrieved!==null){
+    $.unblockUI();
+    $scope.deals=allDealsRetrieved;
+    $('#restOfBody').show();
+  }else{
+    getDealsFunction($scope, searchParameter, null, $route, null)
+  }
+
+$scope.convertToShortStringIfLong = function(str){
+  if (str===undefined){
+    return ""
+  }
+  if (str.length > 35){
+    return str.substring(0,35)+"..."
+  }
+  return str;
+}
+
+$scope.handleHeartClass = function(aDeal){
+  //$scope.$apply(function () {
+  return handleHeartClassFunction(aDeal)
+  //})
+}
+
+$scope.clickedOnStoreName  = function(aDeal, e){
+  if (e!==undefined){
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  //console.log("HJEREsn:"+aDeal.store_data.store_name)
+
+  getDealsFunction($scope, "", {store_name : aDeal.store_data.store_name}, $route, "")
+  //window.location="/#/?s="+aDeal.store_data.store_name
+  //return ("/#/?s="+aDeal.store_data.store_name)
+}
+
+$scope.handleDescription = function(description){
+  if (description === undefined){
+    return ""
+  }
+  if (description.length>80){
+    return description.substring(0,90)+"..."
+  }
+  return description;
+}
+
+$scope.clickedOnHeart = function(aDeal, e){
+  clickedOnHeartFunction(aDeal, $scope, e)
+}
+
+$scope.clickedOnDealOnDealsPage = function(aDeal, e){
+  console.log('clickedOnDealOnDealsPage aDeal:'+JSON.stringify(aDeal))
+  if (e!==undefined){
+    e.stopPropagation();
+    e.preventDefault();
+  }
+  //if(aDeal.deal_link_formatted!==undefined && aDeal.deal_link_formatted!==null && aDeal.deal_link_formatted!==''){
+  //  window.location.href=aDeal.deal_link_formatted
+  //}else{
+  window.location.href="/#/deal?d="+aDeal.id
+  //}
+}
+
+$scope.cleanString = function(str){
+  return cleanString(str)
+
+}
+
+$scope.handleDistanceAway=function(d){
+  if (d===undefined || d === "" || d ==null){
+    return Number(0)
+  }else{
+    return Number(d)
+  }
+}
+
+$scope.handleLikesViews=function(viewsLikes){
+  if (viewsLikes===undefined || viewsLikes === "" || viewsLikes ==null){
+    return Number(0)
+  }else{
+    return Number(viewsLikes)
+  }
+}
+
+$scope.handleCurrency=function(amount){
+  return handleCurrencyFun(amount)
+
+}
+
+})
+
+function clickedOnHeartFunction(aDeal, $scope, e){
+  console.log("heart")
+  e.stopPropagation();
+  e.preventDefault();
+  if (firebase_user_object!==undefined && firebase_user_object !== null){
+    console.log("GOOD")
+    handleLikeFunction(aDeal, $scope, e)
+  }else{
+    bootbox.alert("You have to be signed in to do that.", function(){
+      window.location.href = "/signin_user.html"
+    });
+  }
+}
+
+function handleHeartClassFunction(aDeal){
+  //console.log("handle heart class function")
+  if(firebase_user_object===null || firebase_user_object===undefined){
+    return "fa-heart-o"
+  }
+  var index;
+  if (thisUserLikesThisDeal(aDeal)){
+    return "fa-heart"
+  }else{
+    return "fa-heart-o"
+  }
+}
+
+function handleCurrencyFun(amount){
+  if (amount===undefined || amount === "" || amount ==null){
+    return ""
+  }
+  return "$"+formatMoney(amount)
+}
+
+function addButtonFilter(filterValue){
+  /*if ($('.leafButton').hasClass('is-checked')){
+  filterValue = filterValue + ".leaf"
+}else if ($('.vapeButton').hasClass('is-checked')){
+filterValue = filterValue + ".vape"
 }else if ($('.ediblesButton').hasClass('is-checked')){
 filterValue = filterValue + ".edibles"
 }else if ($('.ediblesButton').hasClass('is-checked')){
@@ -1569,7 +1672,7 @@ function getDealsFunction($scope, searchParameter, dataUp, $route, buttonPressed
       $scope.deals=result.data;
       allDealsRetrieved = result.data;
       //updateHearts();
-      $route.reload();
+      //$route.reload();
 
       if (data!==null && data.hasOwnProperty('user_lat')){
         $( document ).ready(function() {
@@ -1599,8 +1702,6 @@ function getDealsFunction($scope, searchParameter, dataUp, $route, buttonPressed
         })
       }
 
-
-
       jQuery( function() {
         $grid = $('.grid').isotope({
           filter:filterValue,
@@ -1608,43 +1709,30 @@ function getDealsFunction($scope, searchParameter, dataUp, $route, buttonPressed
           masonry:{
             isFitWidth: true
           }
-          /*,
-          getSortData: {
-          utcTime : '.utcTime parseInt',
-          views: '.views parseInt',
-          likes: '.likes parseInt',
-          distanceaway: '.distanceaway parseInt',
-          number: '.number parseInt',
-          category: '[data-category]',
-          weight: function( itemElem ) {
-          var weight = $( itemElem ).find('.weight').text();
-          return parseFloat( weight.replace( /[\(\)]/g, '') );
-        }
-      }*/
-    });
-  })
-  $route.reload();
+        });
+      })
+      $route.reload();
 
 
-  $('#restOfBody').show();
-  //This happens because of the route reload above
-  if (buttonPressed !=null){
-    console.log("ADDING lastFilterPressedDataFilter:"+lastFilterPressedDataFilter+ " lastSortByValueDataFilter:"+lastSortByValueDataFilter)
-    $( document ).ready(function() {
-      $('.sortButton').removeClass('is-checked');
-      $('.filtersButton').removeClass('is-checked');
-      $('.filtersButton[data-filter="'+lastFilterPressedDataFilter+'"]').addClass('is-checked');
-      $('.sortButton[data-sort-by="'+lastSortByValueDataFilter+'"]').addClass('is-checked');
+      $('#restOfBody').show();
+      //This happens because of the route reload above
+      if (buttonPressed !=null){
+        console.log("ADDING lastFilterPressedDataFilter:"+lastFilterPressedDataFilter+ " lastSortByValueDataFilter:"+lastSortByValueDataFilter)
+        $( document ).ready(function() {
+          $('.sortButton').removeClass('is-checked');
+          $('.filtersButton').removeClass('is-checked');
+          $('.filtersButton[data-filter="'+lastFilterPressedDataFilter+'"]').addClass('is-checked');
+          $('.sortButton[data-sort-by="'+lastSortByValueDataFilter+'"]').addClass('is-checked');
+        })
+      }
+      if (lastSortByValue!==null){
+
+      }
     })
-  }
-  if (lastSortByValue!==null){
-
-  }
-})
-}).catch(function(error) {
-  $.unblockUI();
-  bootbox.alert("There was an error, please contact support: "+error)
-});
+  }).catch(function(error) {
+    $.unblockUI();
+    bootbox.alert("There was an error, please contact support: "+error)
+  });
 }
 
 function cleanString(str){
@@ -1735,8 +1823,7 @@ var data = {
   zip : $('#zip').val(),
   city : $('#city').val(),
   state : $('#state').val(),
-  subscribed_to_email : $("#subscribed").prop("checked"),
-  street_address : $('#street_address').val() + suite + " , " + $('#city').val()+ " , " + $('#state').val() + " " + $('#zip').val()
+  subscribed_to_email : $("#subscribed").prop("checked")
 }
 return data;
 }
@@ -1762,42 +1849,50 @@ function checkStoreData(uid){
     bootbox.alert("Store name can not be blank.");
     return false;
   }
-  if ($('#street_address').val() === ""){
-    bootbox.alert("Street address can not be blank.");
-    return false;
-  }
-  if ($('#zip').val() === ""){
-    bootbox.alert("Zip can not be blank.");
-    return false;
-  }
-  if ($('#city').val() === ""){
-    bootbox.alert("City can not be blank.");
-    return false;
-  }
-  if ($('#state').val() === ""){
-    bootbox.alert("State can not be blank.");
-    return false;
-  }
 
-  var suite = ""
-  if ($('#suite').val()!==''){
-    suite = $('#suite').val()+""
-  }
-  var data = {
-    first_name : $('#first_name').val(),
-    last_name : $('#last_name').val(),
-    email : $('#email').val(),
-    phone : $('#phone').val(),
-    store_name : $('#store_name').val(),
-    street_address : $('#street_address').val(),
-    suite : $('#suite').val(),
-    zip : $('#zip').val(),
-    city : $('#city').val(),
-    state : $('#state').val(),
-    uid : firebase.uid,
-    store_address : $('#street_address').val() + suite + " , " + $('#city').val()+ " , " + $('#state').val() + " " + $('#zip').val()
-  }
-  return data;
+  /*
+  if ($('#street_address').val() === ""){
+  bootbox.alert("Street address can not be blank.");
+  return false;
+}
+if ($('#zip').val() === ""){
+bootbox.alert("Zip can not be blank.");
+return false;
+}
+if ($('#city').val() === ""){
+bootbox.alert("City can not be blank.");
+return false;
+}
+if ($('#state').val() === ""){
+bootbox.alert("State can not be blank.");
+return false;
+}
+*/
+if ($('#store_url').val() === ""){
+  bootbox.alert("Store URL can not be blank.");
+  return false;
+}
+
+var suite = ""
+if ($('#suite').val()!==''){
+  suite = $('#suite').val()+""
+}
+var data = {
+  first_name : $('#first_name').val(),
+  last_name : $('#last_name').val(),
+  email : $('#email').val(),
+  phone : $('#phone').val(),
+  store_name : $('#store_name').val(),
+  street_address : $('#street_address').val(),
+  suite : $('#suite').val(),
+  zip : $('#zip').val(),
+  city : $('#city').val(),
+  state : $('#state').val(),
+  store_url : $('#store_url').val(),
+  uid : firebase.uid,
+  store_address : $('#street_address').val() + suite + " , " + $('#city').val()+ " , " + $('#state').val() + " " + $('#zip').val()
+}
+return data;
 }
 
 function checkPostADealData(image_name){
@@ -1846,11 +1941,15 @@ function checkPostADealData(image_name){
     store_id : $('.whichStore').attr("data-id"),
     previous_price : $('#previous_price').val(),
     new_price : $('#new_price').val(),
+    price : $('#new_price').val(),
+    online_only : $("#online_only").prop("checked"),
+    deal_url : $('#deal_url').val(),
     image_name : image_name,
     is_active : $("#is_active").prop("checked"),
     uid : firebase_user_object.uid,
     utc_time : (Math.floor(Date.now() / 1000)),
-    type : $('.dealType').text().trim()
+    type : $('.dealType').text().trim(),
+    is_deal : $("#is_deal").prop("checked")
   }
 
   console.log("****text:"+$('#modalLabel').text()+ " image_name:"+image_name);
@@ -1867,10 +1966,14 @@ function checkPostADealData(image_name){
           store_id : $('.whichStore').attr("data-id"),
           previous_price : $('#previous_price').val(),
           new_price : $('#new_price').val(),
+          price : $('#new_price').val(),
+          online_only : $("#online_only").prop("checked"),
+          deal_url : $('#deal_url').val(),
           is_active : $("#is_active").prop("checked"),
           uid : firebase_user_object.uid,
           utc_time : (Math.floor(Date.now() / 1000)),
-          type : $('.dealType').text().trim()
+          type : $('.dealType').text().trim(),
+          is_deal : $("#is_deal").prop("checked")
         }
       }
     }

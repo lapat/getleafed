@@ -48,6 +48,8 @@
         <button class="button btn-sm  filtersButton" data-filter=".topical">Topical</button>
         <button class="button btn-sm  filtersButton" data-filter=".accessories">Accessories</button>
         <button class="button btn-sm  filtersButton" data-filter=".apparal">Apparal</button>
+        <button class="button btn-sm  filtersButton" data-filter=".CBD">CBD</button>
+
         <button class="button btn-sm  filtersButton" data-filter=".other">Other</button>
         <!--<button class="button cbdButton filtersButton" data-filter=".CBD">CBD</button>
         <button class="button kratomButton filtersButton" data-filter=".kratom">Kratom</button>-->
@@ -81,14 +83,15 @@
       <span ng-repeat="aDeal in deals" ng-click="clickedOnDealOnDealsPage(aDeal, $event)">
 
       <div class="element-item {{cleanString(aDeal.type)}} {{cleanString(aDeal.store_data.city)}} {{cleanString(aDeal.deal_name)}} {{cleanString(aDeal.store_data.store_name)}}" data-category="">
-        <a ng-href="?d={{aDeal.id}}" ng-click="clickedOnDealOnDealsPage(aDeal, $event)">
+        <a href="https://getleafed.com/#/deal?d={{aDeal.id}}" ng-click="clickedOnDealOnDealsPage(aDeal, $event)">
           <img src={{aDeal.image_name}} class="img-fluid" style="max-height:150px;"/>
         </a>
+        <br>
         <span style="font-weight:bold;font-size:100%;" class="theDealName">
           {{convertToShortStringIfLong(aDeal.deal_name)}}
         </span>
         <p style="font-size: 70%;color:grey;">
-          <a class="storeName"  ng-click="clickedOnStoreName(aDeal, $event)" href="#">
+          <a class="storeName"  ng-click="clickedOnStoreName(aDeal, $event)" href="https://getleafed.com/#/">
             {{convertToShortStringIfLong(aDeal.store_data.store_name)}}
           </a>
         </p>

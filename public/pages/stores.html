@@ -1,0 +1,16 @@
+
+<div class="container" style="margin-bottom:150px;">
+  <div class="row" style="margin-top:20px;">
+    <ul class="list-group">
+      <li class="list-group-item">
+
+      <h5 class="mb-1">All Stores</h5>
+      </li>
+      <span ng-repeat="aStore in allStores" >
+        <li class="list-group-item">
+          <a href="https://getleafed.com/#/?s={{aStore.store_name}}">{{aStore.store_name}}</a>
+        </li>
+      </span>
+    </ul>
+  </div>
+</div>
